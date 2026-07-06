@@ -1,0 +1,36 @@
+{
+  "print": [
+    {
+      "name": "Mazes",
+      "icon": "🧩",
+      "folder": "Print Center/Mazes"
+    },
+    {
+      "name": "Coloring Pages",
+      "icon": "🖍️",
+      "folder": "Print Center/Coloring Pages"
+    },
+    {
+      "name": "Color by Number",
+      "icon": "🎨",
+      "folder": "Print Center/Color by Number"
+    },
+    {
+      "name": "Dot-to-Dot",
+      "icon": "🔢",
+      "folder": "Print Center/Dot-to-Dot"
+    }
+  ],
+  "listen": [
+    {
+      "name": "Stories",
+      "icon": "📖",
+      "folder": "Listening Center/Stories"
+    },
+    {
+      "name": "Music",
+      "icon": "🎵",
+      "folder": "Listening Center/Music"
+    }
+  ]
+}
