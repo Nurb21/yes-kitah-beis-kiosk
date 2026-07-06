@@ -1,43 +1,86 @@
-const app = document.querySelector(".home-screen");
+const fallbackConfig = {
+    print: [
+        { name: "Mazes", icon: "🧩" },
+        { name: "Coloring Pages", icon: "🖍️" },
+        { name: "Color by Number", icon: "🎨" },
+        { name: "Dot-to-Dot", icon: "🔢" }
+    ],
+    listen: [
+        { name: "Stories", icon: "📖" },
+        { name: "Music", icon: "🎵" }
+    ]
+};
 
-const printCategories = [
-  { title: "Mazes", icon: "🧩" },
-  { title: "Coloring Pages", icon: "🖍️" },
-  { title: "Color by Number", icon: "🎨" },
-  { title: "Dot-to-Dot", icon: "🔢" }
-];
+let config = fallbackConfig;
 
-const listenCategories = [
-  { title: "Stories", icon: "📖" },
-  { title: "Music", icon: "🎵" }
-];
+async function init() {
+    try {
+        config = await loadConfig();
+    } catch (error) {
+        console.warn("Config failed. Using fallback.", error);
+    }
 
-document.getElementById("printBtn").addEventListener("click", () => {
-  showCategoryScreen("Print Center", "🖨️", printCategories);
-});
+    showHome();
+}
 
-document.getElementById("listenBtn").addEventListener("click", () => {
-  showCategoryScreen("Listening Center", "🎧", listenCategories);
-});
+function showHome() {
+    document.querySelector(".home-screen").innerHTML = `
+        <header class="brand">
+            <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
+            <h1>YES Kitah Beis</h1>
+        </header>
 
-function showCategoryScreen(title, icon, categories) {
-  app.innerHTML = `
-    <header class="screen-header">
-      <button class="home-button" onclick="goHome()">⌂</button>
-      <h1>${icon} ${title}</h1>
-    </header>
+        <section class="home-actions">
+            <button class="big-button print-button" onclick="showPrint()">
+                <span class="button-icon">🖨️</span>
+                <span>PRINT</span>
+            </button>
 
-    <section class="category-grid">
-      ${categories.map(category => `
-        <button class="category-card">
-          <span class="category-icon">${category.icon}</span>
-          <span>${category.title}</span>
+            <button class="big-button listen-button" onclick="showListen()">
+                <span class="button-icon">🎧</span>
+                <span>LISTEN</span>
+            </button>
+        </section>
+    `;
+}
+
+function buildCategoryCards(items, type) {
+    return items.map(item => `
+        <button class="category-card" onclick="openCategory('${type}', '${item.name}')">
+            <span class="category-icon">${item.icon}</span>
+            <span>${item.name}</span>
         </button>
-      `).join("")}
-    </section>
-  `;
+    `).join("");
 }
 
-function goHome() {
-  location.reload();
+function showPrint() {
+    document.querySelector(".home-screen").innerHTML = `
+        <header class="screen-header">
+            <button class="home-button" onclick="showHome()">⌂</button>
+            <h1>🖨️ Print Center</h1>
+        </header>
+
+        <section class="category-grid">
+            ${buildCategoryCards(config.print, "print")}
+        </section>
+    `;
 }
+
+function showListen() {
+    document.querySelector(".home-screen").innerHTML = `
+        <header class="screen-header">
+            <button class="home-button" onclick="showHome()">⌂</button>
+            <h1>🎧 Listening Center</h1>
+        </header>
+
+        <section class="category-grid">
+            ${buildCategoryCards(config.listen, "listen")}
+        </section>
+    `;
+}
+
+function openCategory(type, category) {
+    alert(`${type.toUpperCase()}\n\n${category}\n\nComing Soon`);
+}
+
+init();
