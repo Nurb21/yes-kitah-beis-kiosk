@@ -1,36 +1,39 @@
 {
+  "googleDrive": {
+    "apiKey": "AIzaSyA-8uKHV08B1BYwOSg2WSJc1rXUNZWKoTo"
+  },
   "print": [
     {
       "name": "Mazes",
       "icon": "🧩",
-      "folder": "Print Center/Mazes"
+      "folderId": "1v_0cM3lU3y0Gusdr_ea4ITq9qKWFAi70"
     },
     {
       "name": "Coloring Pages",
       "icon": "🖍️",
-      "folder": "Print Center/Coloring Pages"
+      "folderId": "1tbAnhtUo3B4ZfzW50RO3y2xVTdEmONRD"
     },
     {
       "name": "Color by Number",
       "icon": "🎨",
-      "folder": "Print Center/Color by Number"
+      "folderId": "1UK08nGzaD_7Nqyzm5UzjEHwbV4AoQsTH"
     },
     {
       "name": "Dot-to-Dot",
       "icon": "🔢",
-      "folder": "Print Center/Dot-to-Dot"
+      "folderId": "1YQ0_cSGMTRRYBnYNa_FnJrDDT1t_VVPA"
     }
   ],
   "listen": [
     {
       "name": "Stories",
       "icon": "📖",
-      "folder": "Listening Center/Stories"
+      "folderId": "19EsqBYU0o3DhhvqemRYjc--VrTUkPF9n"
     },
     {
       "name": "Music",
       "icon": "🎵",
-      "folder": "Listening Center/Music"
+      "folderId": "1ehU9axJuTeF1qQFjcbRfjCcyUG_K9uE1"
     }
   ]
 }
