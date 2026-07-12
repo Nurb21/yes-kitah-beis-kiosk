@@ -16,6 +16,7 @@ const fallbackConfig = {
 
 let config = fallbackConfig;
 let currentBrowseType = "";
+let currentItems = [];
 let browseHistory = [];
 
 const appElement = document.querySelector(".home-screen");
@@ -30,8 +31,18 @@ async function init() {
     showHome();
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 function showHome() {
     browseHistory = [];
+    currentItems = [];
 
     appElement.innerHTML = `
         <header class="brand">
@@ -57,13 +68,14 @@ function buildCategoryCards(items, type) {
     return items.map(item => `
         <button class="category-card" type="button" onclick="openCategory('${type}', '${encodeURIComponent(item.name)}')">
             <span class="category-icon">${item.icon}</span>
-            <span>${item.name}</span>
+            <span>${escapeHtml(item.name)}</span>
         </button>
     `).join("");
 }
 
 function showPrint() {
     browseHistory = [];
+    currentItems = [];
 
     appElement.innerHTML = `
         <header class="screen-header">
@@ -79,6 +91,7 @@ function showPrint() {
 
 function showListen() {
     browseHistory = [];
+    currentItems = [];
 
     appElement.innerHTML = `
         <header class="screen-header">
@@ -98,14 +111,18 @@ function getCategory(type, categoryName) {
 }
 
 function getBackAction() {
-    return browseHistory.length > 1 ? "goBack()" : currentBrowseType === "print" ? "showPrint()" : "showListen()";
+    return browseHistory.length > 1
+        ? "goBack()"
+        : currentBrowseType === "print"
+            ? "showPrint()"
+            : "showListen()";
 }
 
 function showLoadingScreen(title) {
     appElement.innerHTML = `
         <header class="screen-header">
             <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
+            <h1>${escapeHtml(title)}</h1>
         </header>
 
         <section class="status-panel">
@@ -120,13 +137,13 @@ function showErrorScreen(title, message) {
     appElement.innerHTML = `
         <header class="screen-header">
             <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
+            <h1>${escapeHtml(title)}</h1>
         </header>
 
         <section class="status-panel error-panel">
             <div class="status-icon">⚠️</div>
             <h2>Something went wrong</h2>
-            <p>${message}</p>
+            <p>${escapeHtml(message)}</p>
             <button class="small-action-button" type="button" onclick="reloadCurrentFolder()">
                 Try Again
             </button>
@@ -138,67 +155,96 @@ function showEmptyScreen(title) {
     appElement.innerHTML = `
         <header class="screen-header">
             <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
+            <h1>${escapeHtml(title)}</h1>
         </header>
 
         <section class="status-panel">
             <div class="status-icon">📭</div>
-            <h2>No files yet</h2>
-            <p>Add files to this Google Drive folder, then try again.</p>
+            <h2>No items yet</h2>
+            <p>Add content to this Google Drive folder, then try again.</p>
         </section>
     `;
 }
 
 function buildDriveItemCards(items) {
-    return items.map(item => {
+    return items.map((item, index) => {
         const preview = item.thumbnailUrl
             ? `<img src="${item.thumbnailUrl}" alt="" class="file-thumbnail">`
             : `<span class="file-icon">${item.icon}</span>`;
 
-        const action = item.isFolder
-            ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
-            : `openDriveFile('${item.openUrl}')`;
-
         return `
-            <button class="file-card" type="button" onclick="${action}">
+            <button class="file-card" type="button" onclick="openBrowserItem(${index})">
                 <span class="file-preview">
                     ${preview}
                 </span>
-                <span class="file-title">${item.title}</span>
+                <span class="file-title">${escapeHtml(item.title)}</span>
             </button>
         `;
     }).join("");
 }
 
-function showDriveBrowser(title, items) {
+function buildStoryCards(items) {
+    return items.map((item, index) => {
+        if (item.type === "folder") {
+            return `
+                <button class="story-card" type="button" onclick="openBrowserItem(${index})">
+                    <span class="story-cover story-cover-placeholder">📁</span>
+                    <span class="story-title">${escapeHtml(item.title)}</span>
+                </button>
+            `;
+        }
+
+        const cover = item.coverUrl
+            ? `<img src="${item.coverUrl}" alt="" class="story-cover-image">`
+            : `<span class="story-cover-placeholder">🎧</span>`;
+
+        return `
+            <button class="story-card" type="button" onclick="openAudioStory(${index})">
+                <span class="story-cover">
+                    ${cover}
+                </span>
+                <span class="story-title">${escapeHtml(item.title)}</span>
+            </button>
+        `;
+    }).join("");
+}
+
+function showDriveBrowser(title, items, mode = "files") {
+    currentItems = items;
+
+    const gridClass = mode === "stories" ? "story-grid" : "file-grid";
+    const cards = mode === "stories" ? buildStoryCards(items) : buildDriveItemCards(items);
+
     appElement.innerHTML = `
         <header class="screen-header">
             <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
+            <h1>${escapeHtml(title)}</h1>
         </header>
 
-        <section class="file-grid">
-            ${buildDriveItemCards(items)}
+        <section class="${gridClass}">
+            ${cards}
         </section>
     `;
 }
 
-async function loadDriveFolder(folderId, title, shouldPushHistory = true) {
+async function loadDriveFolder(folderId, title, shouldPushHistory = true, mode = "files") {
     if (shouldPushHistory) {
-        browseHistory.push({ folderId, title });
+        browseHistory.push({ folderId, title, mode });
     }
 
     showLoadingScreen(title);
 
     try {
-        const items = await getDriveItems(config, folderId);
+        const items = mode === "stories"
+            ? await getStoryPackages(config, folderId)
+            : await getDriveItems(config, folderId);
 
         if (!items.length) {
             showEmptyScreen(title);
             return;
         }
 
-        showDriveBrowser(title, items);
+        showDriveBrowser(title, items, mode);
     } catch (error) {
         console.error(error);
         showErrorScreen(title, error.message);
@@ -217,12 +263,87 @@ async function openCategory(type, encodedCategoryName) {
     currentBrowseType = type;
     browseHistory = [];
 
-    await loadDriveFolder(category.folderId, `${category.icon} ${category.name}`);
+    const isStoryCategory = type === "listen" && category.name.toLowerCase() === "stories";
+    const mode = isStoryCategory ? "stories" : "files";
+
+    await loadDriveFolder(category.folderId, `${category.icon} ${category.name}`, true, mode);
 }
 
-async function openDriveFolder(folderId, encodedTitle) {
-    const title = decodeURIComponent(encodedTitle);
-    await loadDriveFolder(folderId, `📁 ${title}`);
+async function openBrowserItem(index) {
+    const item = currentItems[index];
+
+    if (!item) {
+        return;
+    }
+
+    if (item.type === "story") {
+        openAudioStory(index);
+        return;
+    }
+
+    if (item.isFolder || item.type === "folder") {
+        await loadDriveFolder(item.id, item.title, true, "files");
+        return;
+    }
+
+    window.open(item.openUrl, "_blank", "noopener,noreferrer");
+}
+
+function openAudioStory(index) {
+    const story = currentItems[index];
+
+    if (!story || story.type !== "story") {
+        return;
+    }
+
+    const cover = story.coverUrl
+        ? `<img src="${story.coverUrl}" alt="" class="player-cover-image">`
+        : `<div class="player-cover-placeholder">🎧</div>`;
+
+    appElement.innerHTML = `
+        <section class="audio-player-screen">
+            <header class="screen-header">
+                <button class="home-button" type="button" onclick="goBackToCurrentBrowser()">←</button>
+                <h1>${escapeHtml(story.title)}</h1>
+            </header>
+
+            <div class="audio-player-card">
+                <div class="player-cover">
+                    ${cover}
+                </div>
+
+                <h2>${escapeHtml(story.title)}</h2>
+
+                <audio id="storyAudio" class="story-audio" controls autoplay>
+                    <source src="${story.audioUrl}" type="audio/mpeg">
+                    Your browser does not support audio playback.
+                </audio>
+
+                <button class="large-home-button" type="button" onclick="showHome()">
+                    ⌂ Home
+                </button>
+            </div>
+        </section>
+    `;
+
+    const audio = document.querySelector("#storyAudio");
+
+    if (audio) {
+        audio.addEventListener("ended", () => {
+            showHome();
+        });
+    }
+}
+
+function goBackToCurrentBrowser() {
+    const currentFolder = browseHistory[browseHistory.length - 1];
+
+    if (!currentFolder) {
+        showListen();
+        return;
+    }
+
+    loadDriveFolder(currentFolder.folderId, currentFolder.title, false, currentFolder.mode);
 }
 
 async function goBack() {
@@ -239,7 +360,7 @@ async function goBack() {
     browseHistory.pop();
     const previousFolder = browseHistory[browseHistory.length - 1];
 
-    await loadDriveFolder(previousFolder.folderId, previousFolder.title, false);
+    await loadDriveFolder(previousFolder.folderId, previousFolder.title, false, previousFolder.mode);
 }
 
 async function reloadCurrentFolder() {
@@ -250,11 +371,7 @@ async function reloadCurrentFolder() {
         return;
     }
 
-    await loadDriveFolder(currentFolder.folderId, currentFolder.title, false);
-}
-
-function openDriveFile(url) {
-    window.open(url, "_blank", "noopener,noreferrer");
+    await loadDriveFolder(currentFolder.folderId, currentFolder.title, false, currentFolder.mode);
 }
 
 init();

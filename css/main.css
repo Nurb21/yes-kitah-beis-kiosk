@@ -12,7 +12,7 @@
 html,
 body {
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     font-family: "Nunito", sans-serif;
     background: #FFF8EA;
     color: #0B3B82;
@@ -21,17 +21,21 @@ body {
 body {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+}
+
+button {
+    font-family: "Nunito", sans-serif;
 }
 
 /* =========================
-   Home Screen
+   App Shell
 ========================= */
 
 .home-screen {
     width: 100%;
-    max-width: 900px;
-    min-height: 100%;
+    max-width: 1000px;
+    min-height: 100vh;
     padding: 40px;
     display: flex;
     flex-direction: column;
@@ -63,7 +67,7 @@ body {
 }
 
 /* =========================
-   Buttons
+   Home Buttons
 ========================= */
 
 .home-actions {
@@ -76,27 +80,18 @@ body {
 .big-button {
     width: 100%;
     height: 155px;
-
     border: none;
     border-radius: 28px;
-
     color: white;
-
-    font-family: "Nunito", sans-serif;
     font-size: 56px;
     font-weight: 900;
-
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 35px;
-
     cursor: pointer;
-
     transition: all .18s ease;
-
-    box-shadow:
-        0 12px 28px rgba(0,0,0,.20);
+    box-shadow: 0 12px 28px rgba(0,0,0,.20);
 }
 
 .big-button:hover {
@@ -111,41 +106,25 @@ body {
     font-size: 64px;
 }
 
-/* =========================
-   Print Button
-========================= */
-
 .print-button {
-    background: linear-gradient(
-        180deg,
-        #63BE45,
-        #338B2E
-    );
+    background: linear-gradient(180deg, #63BE45, #338B2E);
 }
-
-/* =========================
-   Listen Button
-========================= */
 
 .listen-button {
-    background: linear-gradient(
-        180deg,
-        #2796F3,
-        #0A5BA8
-    );
+    background: linear-gradient(180deg, #2796F3, #0A5BA8);
 }
 
 /* =========================
-   Category Screens
+   Headers
 ========================= */
 
 .screen-header {
     width: 100%;
+    min-height: 90px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    margin-bottom: 20px;
 }
 
 .screen-header h1 {
@@ -153,25 +132,20 @@ body {
     font-weight: 900;
     color: #0B3B82;
     text-align: center;
+    line-height: 1.05;
 }
 
 .home-button {
     position: absolute;
     left: 0;
-
     width: 80px;
     height: 80px;
-
     border: none;
     border-radius: 22px;
-
     background: white;
     color: #0B3B82;
-
-    font-family: "Nunito", sans-serif;
     font-size: 44px;
     font-weight: 900;
-
     box-shadow: 0 8px 18px rgba(0,0,0,.15);
     cursor: pointer;
 }
@@ -179,6 +153,10 @@ body {
 .home-button:active {
     transform: scale(.95);
 }
+
+/* =========================
+   Category Screens
+========================= */
 
 .category-grid {
     width: 100%;
@@ -189,23 +167,17 @@ body {
 
 .category-card {
     min-height: 190px;
-
     border: none;
     border-radius: 28px;
-
     background: white;
     color: #0B3B82;
-
-    font-family: "Nunito", sans-serif;
     font-size: 32px;
     font-weight: 900;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 18px;
-
     box-shadow: 0 12px 28px rgba(0,0,0,.18);
     cursor: pointer;
 }
@@ -225,19 +197,15 @@ body {
 .status-panel {
     width: 100%;
     min-height: 360px;
-
     border-radius: 32px;
     background: white;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 18px;
-
     padding: 40px;
     text-align: center;
-
     box-shadow: 0 12px 28px rgba(0,0,0,.16);
 }
 
@@ -267,20 +235,16 @@ body {
     border: none;
     border-radius: 18px;
     padding: 18px 34px;
-
     background: #0B3B82;
     color: white;
-
-    font-family: "Nunito", sans-serif;
     font-size: 24px;
     font-weight: 900;
-
     cursor: pointer;
     box-shadow: 0 8px 18px rgba(0,0,0,.16);
 }
 
 /* =========================
-   File Browser
+   Generic File Browser
 ========================= */
 
 .file-grid {
@@ -292,24 +256,17 @@ body {
 
 .file-card {
     min-height: 230px;
-
     border: none;
     border-radius: 22px;
-
     background: white;
     color: #0B3B82;
-
-    font-family: "Nunito", sans-serif;
     font-size: 22px;
     font-weight: 900;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-
     overflow: hidden;
-
     box-shadow: 0 10px 22px rgba(0,0,0,.16);
     cursor: pointer;
 }
@@ -321,11 +278,9 @@ body {
 .file-preview {
     width: 100%;
     height: 155px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     background: #F4F7FB;
     border-bottom: 1px solid rgba(11,59,130,.12);
 }
@@ -346,4 +301,171 @@ body {
     line-height: 1.1;
     text-align: center;
     word-break: break-word;
+}
+
+/* =========================
+   Story Browser
+========================= */
+
+.story-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px;
+    align-items: start;
+}
+
+.story-card {
+    border: none;
+    background: transparent;
+    color: #0B3B82;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.story-card:active {
+    transform: scale(.98);
+}
+
+.story-cover {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 28px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 12px 28px rgba(0,0,0,.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.story-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    font-size: 90px;
+    background: #F4F7FB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-title {
+    width: 100%;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-align: center;
+    color: #0B3B82;
+}
+
+/* =========================
+   Audio Player
+========================= */
+
+.audio-player-screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.audio-player-card {
+    width: 100%;
+    max-width: 720px;
+    background: white;
+    border-radius: 34px;
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.18);
+}
+
+.player-cover {
+    width: min(520px, 100%);
+    aspect-ratio: 1 / 1;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #F4F7FB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(0,0,0,.16);
+}
+
+.player-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.player-cover-placeholder {
+    font-size: 110px;
+}
+
+.audio-player-card h2 {
+    font-size: 40px;
+    font-weight: 900;
+    color: #0B3B82;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.story-audio {
+    width: 100%;
+    height: 54px;
+}
+
+.large-home-button {
+    border: none;
+    border-radius: 22px;
+    padding: 18px 42px;
+    background: linear-gradient(180deg, #2796F3, #0A5BA8);
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(0,0,0,.16);
+}
+
+/* =========================
+   Smaller Screens
+========================= */
+
+@media (max-width: 760px) {
+    .home-screen {
+        padding: 28px;
+    }
+
+    .screen-header h1 {
+        font-size: 42px;
+        padding-left: 90px;
+        padding-right: 10px;
+    }
+
+    .category-grid,
+    .file-grid,
+    .story-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .brand h1 {
+        font-size: 48px;
+    }
+
+    .big-button {
+        height: 130px;
+        font-size: 42px;
+    }
 }
