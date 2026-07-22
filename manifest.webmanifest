@@ -1,0 +1,26 @@
+{
+  "name": "YES Kitah Beis Kiosk",
+  "short_name": "YES Kitah Beis",
+  "description": "Student-friendly Print and Listening Center for YES Kitah Beis.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#FFF8EA",
+  "theme_color": "#FFF8EA",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
