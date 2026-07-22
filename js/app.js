@@ -46,7 +46,7 @@ function showHome() {
     appElement.innerHTML = `
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
-            <h1>YES Kitah Beis</h1>
+            <h1>YES Kitah Beis Test 6</h1>
         </header>
 
         <section class="home-actions">
