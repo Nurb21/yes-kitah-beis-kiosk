@@ -237,11 +237,21 @@ function showDriveBrowser(title, items) {
     renderPagedDriveBrowser();
 }
 
-function showStoryBrowser(title, stories, regularItems) {
-    currentPagedTitle = title;
-    currentPagedItems = [...stories, ...regularItems];
-    currentPage = 1;
-    renderPagedStoryBrowser();
+function renderPagedStoryBrowser() {
+    appElement.innerHTML = `
+        <header class="screen-header">
+            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
+            <h1>${currentPagedTitle}</h1>
+        </header>
+
+        <section class="story-grid">
+            ${buildStoryCards(getCurrentPageItems())}
+        </section>
+
+        <div class="story-pagination-bottom">
+            ${renderPaginationControls("story")}
+        </div>
+    `;
 }
 
 function getTotalPages() {
