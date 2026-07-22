@@ -1,6 +1,6 @@
 # YES Kitah Beis Kiosk
 
-Version **0.6.1-test4**
+Version **0.6.1-test5**
 
 A student-friendly classroom kiosk for Yeshiva Elementary School.
 
@@ -8,19 +8,20 @@ A student-friendly classroom kiosk for Yeshiva Elementary School.
 
 - Print Center backed by Google Drive
 - Student-initiated AirPrint workflow for PDF worksheets
-- Animated worksheet preparation screen
-- Automatic return to the current folder when the AirPrint dialog opens
 - Recursive Google Drive folders
 - Six items per page with pagination
 - Listening Center with story packages and automatic audio playback
 - GitHub Pages deployment
-- Add to Home Screen support on the target iPad
-- Standalone full-screen launch without Safari controls
+- Add to Home Screen support
+- Standalone full-screen launch
 
-## v0.6.1-test4 Change
+## v0.6.1-test5 Listening Center UI Test
 
-The Home screen now has more vertical space between the large **PRINT** and **LISTEN** buttons. No button behavior or application logic was changed.
+This build keeps the approved Home-screen spacing from test4 and makes four related visual refinements only:
 
-## Important
+- Centers the Stories and Music choices lower on the Listening Center screen.
+- Tightens the six-item Stories grid.
+- Places the pagination controls above the Stories grid.
+- Displays all story artwork in uniform 220 x 220 square frames using clean cropping.
 
-Safari and iPadOS require the print action to come from a direct student tap. Silent printing without the native AirPrint dialog is not supported.
+No print, Google Drive, folder, pagination, audio playback, or worksheet-preparation logic was changed.

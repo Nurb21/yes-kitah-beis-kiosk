@@ -98,7 +98,7 @@ function showListen() {
             <h1>🎧 Listening Center</h1>
         </header>
 
-        <section class="category-grid">
+        <section class="category-grid listening-category-grid">
             ${buildCategoryCards(config.listen, "listen")}
         </section>
     `;
@@ -300,11 +300,13 @@ function renderPagedStoryBrowser() {
             <h1>${currentPagedTitle}</h1>
         </header>
 
+        <div class="story-pagination-top">
+            ${renderPaginationControls("story")}
+        </div>
+
         <section class="story-grid">
             ${buildStoryCards(getCurrentPageItems())}
         </section>
-
-        ${renderPaginationControls("story")}
     `;
 }
 
