@@ -22,6 +22,9 @@ let browseHistory = [];
 let currentPagedItems = [];
 let currentPagedTitle = "";
 let currentPage = 1;
+let activePrintFrame = null;
+let activePrintObjectUrl = "";
+let printCleanupTimer = null;
 
 const appElement = document.querySelector(".home-screen");
 
@@ -171,7 +174,9 @@ function buildDriveItemCards(items) {
             ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
             : item.isAudio
                 ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
-                : `openDriveFile('${item.openUrl}')`;
+                : currentBrowseType === "print" && item.mimeType === "application/pdf"
+                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
+                    : `openDriveFile('${item.openUrl}')`;
 
         return `
             <button class="file-card" type="button" onclick="${action}">
@@ -209,7 +214,9 @@ function buildStoryCards(items) {
             ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
             : item.isAudio
                 ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
-                : `openDriveFile('${item.openUrl}')`;
+                : currentBrowseType === "print" && item.mimeType === "application/pdf"
+                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
+                    : `openDriveFile('${item.openUrl}')`;
 
         return `
             <button class="file-card" type="button" onclick="${action}">
@@ -437,6 +444,127 @@ async function reloadCurrentFolder() {
 
 function openDriveFile(url) {
     window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function showPrintPreparingScreen(title) {
+    const existingOverlay = document.querySelector(".print-preparing-overlay");
+
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
+    const overlay = document.createElement("section");
+    overlay.className = "print-preparing-overlay";
+    overlay.setAttribute("role", "status");
+    overlay.setAttribute("aria-live", "polite");
+    overlay.innerHTML = `
+        <div class="print-preparing-card">
+            <div class="gear-animation" aria-hidden="true">
+                <span class="gear gear-one">⚙️</span>
+                <span class="gear gear-two">⚙️</span>
+            </div>
+            <h2>Getting your worksheet ready...</h2>
+            <p>${title}</p>
+            <p class="print-preparing-note">Just a moment!</p>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+}
+
+function hidePrintPreparingScreen() {
+    const overlay = document.querySelector(".print-preparing-overlay");
+
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function cleanupPrintResources() {
+    if (printCleanupTimer) {
+        window.clearTimeout(printCleanupTimer);
+        printCleanupTimer = null;
+    }
+
+    if (activePrintFrame) {
+        activePrintFrame.remove();
+        activePrintFrame = null;
+    }
+
+    if (activePrintObjectUrl) {
+        URL.revokeObjectURL(activePrintObjectUrl);
+        activePrintObjectUrl = "";
+    }
+
+    hidePrintPreparingScreen();
+}
+
+function handlePrintFinished() {
+    cleanupPrintResources();
+}
+
+async function printDrivePdf(encodedTitle, encodedMediaUrl) {
+    const title = decodeURIComponent(encodedTitle);
+    const mediaUrl = decodeURIComponent(encodedMediaUrl);
+
+    cleanupPrintResources();
+    showPrintPreparingScreen(title);
+
+    try {
+        const response = await fetch(mediaUrl);
+
+        if (!response.ok) {
+            throw new Error(`Unable to prepare worksheet (${response.status}).`);
+        }
+
+        const pdfBlob = await response.blob();
+
+        if (!pdfBlob.type.includes("pdf")) {
+            throw new Error("This worksheet is not a PDF file.");
+        }
+
+        activePrintObjectUrl = URL.createObjectURL(pdfBlob);
+        activePrintFrame = document.createElement("iframe");
+        activePrintFrame.className = "print-document-frame";
+        activePrintFrame.title = `Print ${title}`;
+        activePrintFrame.setAttribute("aria-hidden", "true");
+        activePrintFrame.src = activePrintObjectUrl;
+
+        activePrintFrame.onload = () => {
+            window.setTimeout(() => {
+                hidePrintPreparingScreen();
+
+                try {
+                    const printWindow = activePrintFrame && activePrintFrame.contentWindow;
+
+                    if (!printWindow) {
+                        throw new Error("The print window could not be opened.");
+                    }
+
+                    printWindow.focus();
+                    printWindow.addEventListener("afterprint", handlePrintFinished, { once: true });
+                    printWindow.print();
+
+                    printCleanupTimer = window.setTimeout(handlePrintFinished, 120000);
+                } catch (error) {
+                    console.error(error);
+                    cleanupPrintResources();
+                    showErrorScreen(currentPagedTitle, "The print screen could not open. Please try the worksheet again.");
+                }
+            }, 700);
+        };
+
+        activePrintFrame.onerror = () => {
+            cleanupPrintResources();
+            showErrorScreen(currentPagedTitle, "The worksheet could not be prepared for printing. Please try again.");
+        };
+
+        document.body.appendChild(activePrintFrame);
+    } catch (error) {
+        console.error(error);
+        cleanupPrintResources();
+        showErrorScreen(currentPagedTitle, error.message || "The worksheet could not be prepared for printing.");
+    }
 }
 
 function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
