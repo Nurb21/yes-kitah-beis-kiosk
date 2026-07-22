@@ -2,7 +2,7 @@
 
 ## Current Release
 
-**Version 0.6.0 — One-Tap Worksheet Printing**
+**Version 0.6.1-test2 — iPad Home Screen Test**
 
 ## Hardware Target
 
@@ -40,3 +40,21 @@ Automatic printing without the native print dialog is intentionally impossible i
 ## v0.6.0 iPad Printing Decision
 
 Automatic printing after an asynchronous PDF download can be blocked by Safari. The production workflow therefore prepares the PDF first and then requires a fresh tap on a large print confirmation button. Cancel returns to the existing folder without changing pagination.
+
+
+## v0.6.1-test2 Test Scope
+
+- Added Apple mobile web app metadata in the existing document head.
+- Added a web app manifest.
+- Added Apple and manifest PNG icons.
+- Did not modify the HTML body, CSS, JavaScript, print workflow, folder state, pagination, or Listening Center behavior.
+
+### Required Test
+
+1. Remove any older Home Screen shortcut for the kiosk.
+2. Open the GitHub Pages kiosk in Safari.
+3. Add it to the Home Screen.
+4. Launch only from the new Home Screen icon.
+5. Confirm the original v0.6.0 interface is unchanged.
+6. Confirm Safari address and browser controls are absent.
+7. Confirm Print Center and Listening Center open normally.

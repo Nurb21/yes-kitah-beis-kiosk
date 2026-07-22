@@ -1,6 +1,6 @@
 # YES Kitah Beis Kiosk
 
-Version **0.6.0**
+Version **0.6.1-test2**
 
 A student-friendly classroom kiosk for Yeshiva Elementary School.
 
@@ -29,3 +29,8 @@ Browsers and iPadOS require the native print dialog. The kiosk cannot silently p
 ## v0.6.0 Final Print Workflow
 
 Tap worksheet, wait for the animated preparation screen, then tap the large **PRINT MY WORKSHEET** button to open the native print dialog. This direct student tap avoids Safari automatic-print blocking.
+
+
+## v0.6.1-test2 — iPad Home Screen Test
+
+This test build adds only Home Screen and standalone-launch metadata plus icon files. Existing page body, CSS, JavaScript, printing workflow, Drive browsing, pagination, and Listening Center code are unchanged from v0.6.0.
