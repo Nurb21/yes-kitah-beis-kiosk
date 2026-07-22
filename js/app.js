@@ -244,23 +244,6 @@ function showStoryBrowser(title, stories, regularItems) {
     renderPagedStoryBrowser();
 }
 
-function renderPagedStoryBrowser() {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${currentPagedTitle}</h1>
-        </header>
-
-        <section class="story-grid">
-            ${buildStoryCards(getCurrentPageItems())}
-        </section>
-
-        <div class="story-pagination-bottom">
-            ${renderPaginationControls("story")}
-        </div>
-    `;
-}
-
 function getTotalPages() {
     return Math.max(1, Math.ceil(currentPagedItems.length / ITEMS_PER_PAGE));
 }
