@@ -237,6 +237,13 @@ function showDriveBrowser(title, items) {
     renderPagedDriveBrowser();
 }
 
+function showStoryBrowser(title, stories, regularItems) {
+    currentPagedTitle = title;
+    currentPagedItems = [...stories, ...regularItems];
+    currentPage = 1;
+    renderPagedStoryBrowser();
+}
+
 function renderPagedStoryBrowser() {
     appElement.innerHTML = `
         <header class="screen-header">
