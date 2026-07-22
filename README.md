@@ -1,36 +1,26 @@
 # YES Kitah Beis Kiosk
 
-Version **0.6.1-test2**
+Version **0.6.1-test4**
 
 A student-friendly classroom kiosk for Yeshiva Elementary School.
 
 ## Production Features
 
 - Print Center backed by Google Drive
-- One-tap printing for single-page PDF worksheets
+- Student-initiated AirPrint workflow for PDF worksheets
 - Animated worksheet preparation screen
-- Native browser/iPadOS print dialog (AirPrint compatible)
+- Automatic return to the current folder when the AirPrint dialog opens
 - Recursive Google Drive folders
 - Six items per page with pagination
 - Listening Center with story packages and automatic audio playback
 - GitHub Pages deployment
+- Add to Home Screen support on the target iPad
+- Standalone full-screen launch without Safari controls
 
-## v0.6.0 Student Print Workflow
+## v0.6.1-test4 Change
 
-Home → Print Center → Category → Folder → Tap worksheet → Print dialog
-
-The kiosk does not open Google Drive, a browser tab, or a separate PDF preview screen. After printing or canceling, the student remains in the same folder and on the same pagination page.
+The Home screen now has more vertical space between the large **PRINT** and **LISTEN** buttons. No button behavior or application logic was changed.
 
 ## Important
 
-Browsers and iPadOS require the native print dialog. The kiosk cannot silently print without confirmation.
-
-
-## v0.6.0 Final Print Workflow
-
-Tap worksheet, wait for the animated preparation screen, then tap the large **PRINT MY WORKSHEET** button to open the native print dialog. This direct student tap avoids Safari automatic-print blocking.
-
-
-## v0.6.1-test2 — iPad Home Screen Test
-
-This test build adds only Home Screen and standalone-launch metadata plus icon files. Existing page body, CSS, JavaScript, printing workflow, Drive browsing, pagination, and Listening Center code are unchanged from v0.6.0.
+Safari and iPadOS require the print action to come from a direct student tap. Silent printing without the native AirPrint dialog is not supported.

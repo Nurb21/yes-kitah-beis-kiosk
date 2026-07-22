@@ -549,6 +549,10 @@ function printPreparedWorksheet() {
 
         printWindow.focus();
         printWindow.addEventListener("afterprint", handlePrintFinished, { once: true });
+
+        // Return the student to the worksheet folder as soon as the
+        // user-initiated print action opens the native AirPrint dialog.
+        hidePrintPreparingScreen();
         printWindow.print();
 
         printCleanupTimer = window.setTimeout(handlePrintFinished, 120000);

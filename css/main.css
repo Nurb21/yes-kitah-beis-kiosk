@@ -72,7 +72,7 @@ body {
     max-width: 900px;
     display: flex;
     flex-direction: column;
-    gap: 35px;
+    gap: 55px;
 }
 
 .big-button {

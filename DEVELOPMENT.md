@@ -1,8 +1,8 @@
 # YES Kitah Beis Kiosk — Development Notes
 
-## Current Release
+## Current Test Build
 
-**Version 0.6.1-test2 — iPad Home Screen Test**
+**Version 0.6.1-test4 — Home Button Spacing**
 
 ## Hardware Target
 
@@ -10,51 +10,38 @@
 - Dell E310dw AirPrint printer
 - Bluetooth speaker
 
-## v0.6.0 Scope
+## Verified Before This Build
 
-- Replaced the Print Center PDF browser-tab workflow with one-tap printing.
-- A full-screen animated gear message appears while the PDF downloads.
-- The PDF is fetched directly through the Google Drive API.
-- The native print dialog opens from an off-screen PDF frame.
-- No Drive page, Drive branding, new tab, or separate preview screen is shown.
-- Current folder and pagination state remain unchanged.
-- Listening Center behavior is unchanged.
+- GitHub Pages deployment
+- Google Drive browsing
+- Recursive folders
+- Pagination
+- Story packages
+- Audio playback
+- Listening Center
+- Google Drive thumbnails
+- Add to Home Screen
+- Standalone full-screen launch
+- Native AirPrint successfully prints to the Dell E310dw
 
-## Required Production Test
+## v0.6.1-test4 Scope
 
-1. Open the kiosk through a local web server or GitHub Pages.
-2. Enter Print Center and navigate to a folder containing a PDF.
-3. Tap a worksheet thumbnail.
-4. Confirm the animated gears appear.
-5. Confirm the native print dialog opens.
-6. Print or cancel.
-7. Confirm the same folder and pagination page remain visible.
-8. Test the same workflow on the target iPad and Dell E310dw printer.
-9. Confirm Listening Center still browses folders and plays story audio.
+This build changes one visual detail only:
+
+- Increased the vertical space between the large **PRINT** and **LISTEN** buttons on the Home screen.
+- Button sizes, colors, wording, and actions are unchanged.
+- No print, Google Drive, pagination, Listening Center, audio, or worksheet-preparation logic was changed.
+
+## Required Test
+
+1. Deploy the complete test build to GitHub Pages.
+2. Launch the kiosk from the iPad Home Screen icon.
+3. Confirm the PRINT and LISTEN buttons have clearer separation.
+4. Confirm both buttons remain fully visible and easy to tap in landscape mode.
+5. Open Print Center and return Home.
+6. Open Listening Center and return Home.
+7. Confirm both buttons still open the correct section.
 
 ## Browser Constraint
 
-Automatic printing without the native print dialog is intentionally impossible in normal Safari/browser security.
-
-
-## v0.6.0 iPad Printing Decision
-
-Automatic printing after an asynchronous PDF download can be blocked by Safari. The production workflow therefore prepares the PDF first and then requires a fresh tap on a large print confirmation button. Cancel returns to the existing folder without changing pagination.
-
-
-## v0.6.1-test2 Test Scope
-
-- Added Apple mobile web app metadata in the existing document head.
-- Added a web app manifest.
-- Added Apple and manifest PNG icons.
-- Did not modify the HTML body, CSS, JavaScript, print workflow, folder state, pagination, or Listening Center behavior.
-
-### Required Test
-
-1. Remove any older Home Screen shortcut for the kiosk.
-2. Open the GitHub Pages kiosk in Safari.
-3. Add it to the Home Screen.
-4. Launch only from the new Home Screen icon.
-5. Confirm the original v0.6.0 interface is unchanged.
-6. Confirm Safari address and browser controls are absent.
-7. Confirm Print Center and Listening Center open normally.
+Safari requires the native print dialog and a direct user action. The kiosk must not attempt silent printing.
