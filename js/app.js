@@ -300,13 +300,13 @@ function renderPagedStoryBrowser() {
             <h1>${currentPagedTitle}</h1>
         </header>
 
-        <div class="story-pagination-top">
-            ${renderPaginationControls("story")}
-        </div>
-
         <section class="story-grid">
             ${buildStoryCards(getCurrentPageItems())}
         </section>
+
+        <div class="story-pagination-bottom">
+            ${renderPaginationControls("story")}
+        </div>
     `;
 }
 

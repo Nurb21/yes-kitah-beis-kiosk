@@ -2,7 +2,7 @@
 
 ## Current Test Build
 
-**Version 0.6.1-test5 — Listening Center UI Refinements**
+**Version 0.6.1-test7-revised — Listening Center UI Refinements**
 
 ## Hardware Target
 
@@ -21,7 +21,7 @@
 - Native AirPrint to the Dell E310dw
 - Approved Home-screen PRINT/LISTEN spacing from v0.6.1-test4
 
-## v0.6.1-test5 Scope
+## v0.6.1-test7-revised Scope
 
 This build combines four closely related Listening Center visual changes:
 
@@ -42,3 +42,8 @@ No print logic, Google Drive calls, navigation actions, pagination calculations,
 6. Confirm Previous/Next appears near the top and changes pages correctly.
 7. Open a story and confirm audio still starts and controls work.
 8. Return Home and briefly confirm Print Center still opens.
+
+
+## v0.6.1-test7 Scope
+
+Story Browser layout only: six smaller square covers remain visible in two rows of three, with Previous/Page/Next controls below the grid. No print, Drive, pagination calculation, or audio logic changed.

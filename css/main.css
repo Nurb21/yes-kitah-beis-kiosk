@@ -57,7 +57,7 @@ body {
 }
 
 .brand h1 {
-    font-size: 68px;
+    font-size: 56px;
     font-weight: 900;
     color: #0B3B82;
     letter-spacing: -1px;
@@ -139,7 +139,7 @@ body {
     width: 82px;
     height: 82px;
     border: none;
-    border-radius: 18px;
+    border-radius: 16px;
     background: white;
     color: #0B3B82;
     font-family: "Nunito", sans-serif;
@@ -334,9 +334,9 @@ body {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    max-width: 900px;
-    margin: 0 auto;
-    gap: 24px 24px;
+    max-width: 690px;
+    margin: -22px auto 0;
+    gap: 8px 12px;
 }
 
 .story-card {
@@ -347,7 +347,7 @@ body {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     align-items: center;
 }
 
@@ -356,10 +356,10 @@ body {
 }
 
 .story-cover {
-    width: 220px;
-    height: 220px;
+    width: 122px;
+    height: 122px;
     max-width: 100%;
-    border-radius: 24px;
+    border-radius: 18px;
     overflow: hidden;
     background: white;
     display: flex;
@@ -375,14 +375,18 @@ body {
 }
 
 .story-cover-placeholder {
-    font-size: 92px;
+    font-size: 68px;
 }
 
 .story-title {
     width: 100%;
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 900;
-    line-height: 1.12;
+    line-height: 1.05;
+    min-height: 34px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
     text-align: center;
     color: #0B3B82;
 }
@@ -392,10 +396,10 @@ body {
    Story Pagination
 ========================= */
 
-.story-pagination-top {
+.story-pagination-bottom {
     width: 100%;
-    max-width: 900px;
-    margin: -16px auto 0;
+    max-width: 690px;
+    margin: -28px auto 0;
 }
 
 .pagination-bar {
@@ -403,19 +407,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 22px;
+    gap: 14px;
 }
 
 .page-button {
-    min-width: 210px;
-    min-height: 64px;
+    min-width: 180px;
+    min-height: 54px;
     border: none;
     border-radius: 20px;
-    padding: 12px 24px;
+    padding: 9px 20px;
     background: linear-gradient(180deg, #2796F3, #0A5BA8);
     color: white;
     font-family: "Nunito", sans-serif;
-    font-size: 25px;
+    font-size: 22px;
     font-weight: 900;
     cursor: pointer;
     box-shadow: 0 8px 18px rgba(0,0,0,.16);
@@ -427,7 +431,7 @@ body {
 }
 
 .page-label {
-    min-width: 150px;
+    min-width: 125px;
     text-align: center;
     font-size: 22px;
     font-weight: 900;
@@ -511,9 +515,12 @@ body {
 ========================= */
 
 @media (max-width: 980px) {
-    .story-grid,
     .file-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .story-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -529,9 +536,33 @@ body {
     }
 
     .category-grid,
-    .file-grid,
-    .story-grid {
+    .file-grid {
         grid-template-columns: 1fr;
+    }
+
+    .story-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px 6px;
+    }
+
+    .story-cover {
+        width: 112px;
+        height: 112px;
+    }
+
+    .story-title {
+        font-size: 15px;
+    }
+
+    .page-button {
+        min-width: 150px;
+        min-height: 50px;
+        font-size: 19px;
+    }
+
+    .page-label {
+        min-width: 105px;
+        font-size: 18px;
     }
 
     .brand h1 {
@@ -668,7 +699,7 @@ body {
 }
 
 .print-ready-icon {
-    font-size: 92px;
+    font-size: 68px;
     line-height: 1;
 }
 
