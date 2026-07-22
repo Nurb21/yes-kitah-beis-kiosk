@@ -35,3 +35,8 @@
 ## Browser Constraint
 
 Automatic printing without the native print dialog is intentionally impossible in normal Safari/browser security.
+
+
+## v0.6.0 iPad Printing Decision
+
+Automatic printing after an asynchronous PDF download can be blocked by Safari. The production workflow therefore prepares the PDF first and then requires a fresh tap on a large print confirmation button. Cancel returns to the existing folder without changing pagination.

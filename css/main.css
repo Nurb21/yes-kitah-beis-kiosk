@@ -588,3 +588,81 @@ body {
         font-size: 22px;
     }
 }
+
+
+/* =========================
+   Print Confirmation Screen
+========================= */
+
+.print-ready-card {
+    gap: 20px;
+}
+
+.print-ready-icon {
+    font-size: 92px;
+    line-height: 1;
+}
+
+.print-my-worksheet-button {
+    width: 100%;
+    min-height: 112px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 28px;
+    padding: 20px 28px;
+    background: #2f9e44;
+    color: white;
+    font: inherit;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    box-shadow: 0 10px 0 #217a32, 0 16px 28px rgba(0, 0, 0, .2);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.print-my-worksheet-button:active {
+    transform: translateY(5px);
+    box-shadow: 0 5px 0 #217a32, 0 9px 18px rgba(0, 0, 0, .18);
+}
+
+.print-my-worksheet-button:focus-visible {
+    outline: 6px solid #ffcf33;
+    outline-offset: 5px;
+}
+
+.cancel-print-button {
+    min-width: 230px;
+    min-height: 64px;
+    border: 3px solid #7890aa;
+    border-radius: 20px;
+    padding: 12px 24px;
+    background: #eef3f8;
+    color: #244668;
+    font: inherit;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+@media (max-width: 760px) {
+    .print-ready-icon {
+        font-size: 72px;
+    }
+
+    .print-my-worksheet-button {
+        min-height: 96px;
+        font-size: 28px;
+        border-radius: 24px;
+    }
+
+    .cancel-print-button {
+        min-height: 58px;
+        font-size: 21px;
+    }
+}

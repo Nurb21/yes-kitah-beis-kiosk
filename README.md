@@ -24,3 +24,8 @@ The kiosk does not open Google Drive, a browser tab, or a separate PDF preview s
 ## Important
 
 Browsers and iPadOS require the native print dialog. The kiosk cannot silently print without confirmation.
+
+
+## v0.6.0 Final Print Workflow
+
+Tap worksheet, wait for the animated preparation screen, then tap the large **PRINT MY WORKSHEET** button to open the native print dialog. This direct student tap avoids Safari automatic-print blocking.

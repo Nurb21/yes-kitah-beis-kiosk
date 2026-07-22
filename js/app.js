@@ -25,6 +25,7 @@ let currentPage = 1;
 let activePrintFrame = null;
 let activePrintObjectUrl = "";
 let printCleanupTimer = null;
+let activePrintTitle = "";
 
 const appElement = document.querySelector(".home-screen");
 
@@ -472,6 +473,36 @@ function showPrintPreparingScreen(title) {
     document.body.appendChild(overlay);
 }
 
+function showPrintReadyScreen(title) {
+    const overlay = document.querySelector(".print-preparing-overlay");
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-live", "off");
+    overlay.innerHTML = `
+        <div class="print-preparing-card print-ready-card">
+            <div class="print-ready-icon" aria-hidden="true">📄</div>
+            <h2>Your worksheet is ready!</h2>
+            <p>${title}</p>
+            <button class="print-my-worksheet-button" type="button" onclick="printPreparedWorksheet()">
+                <span aria-hidden="true">🖨️</span>
+                <span>PRINT MY WORKSHEET</span>
+            </button>
+            <button class="cancel-print-button" type="button" onclick="cancelPreparedPrint()">
+                ← Go Back
+            </button>
+        </div>
+    `;
+
+    const printButton = overlay.querySelector(".print-my-worksheet-button");
+    if (printButton) {
+        printButton.focus();
+    }
+}
+
 function hidePrintPreparingScreen() {
     const overlay = document.querySelector(".print-preparing-overlay");
 
@@ -496,6 +527,7 @@ function cleanupPrintResources() {
         activePrintObjectUrl = "";
     }
 
+    activePrintTitle = "";
     hidePrintPreparingScreen();
 }
 
@@ -503,11 +535,36 @@ function handlePrintFinished() {
     cleanupPrintResources();
 }
 
+function cancelPreparedPrint() {
+    cleanupPrintResources();
+}
+
+function printPreparedWorksheet() {
+    try {
+        const printWindow = activePrintFrame && activePrintFrame.contentWindow;
+
+        if (!printWindow) {
+            throw new Error("The print window could not be opened.");
+        }
+
+        printWindow.focus();
+        printWindow.addEventListener("afterprint", handlePrintFinished, { once: true });
+        printWindow.print();
+
+        printCleanupTimer = window.setTimeout(handlePrintFinished, 120000);
+    } catch (error) {
+        console.error(error);
+        cleanupPrintResources();
+        showErrorScreen(currentPagedTitle, "The print screen could not open. Please try the worksheet again.");
+    }
+}
+
 async function printDrivePdf(encodedTitle, encodedMediaUrl) {
     const title = decodeURIComponent(encodedTitle);
     const mediaUrl = decodeURIComponent(encodedMediaUrl);
 
     cleanupPrintResources();
+    activePrintTitle = title;
     showPrintPreparingScreen(title);
 
     try {
@@ -532,25 +589,7 @@ async function printDrivePdf(encodedTitle, encodedMediaUrl) {
 
         activePrintFrame.onload = () => {
             window.setTimeout(() => {
-                hidePrintPreparingScreen();
-
-                try {
-                    const printWindow = activePrintFrame && activePrintFrame.contentWindow;
-
-                    if (!printWindow) {
-                        throw new Error("The print window could not be opened.");
-                    }
-
-                    printWindow.focus();
-                    printWindow.addEventListener("afterprint", handlePrintFinished, { once: true });
-                    printWindow.print();
-
-                    printCleanupTimer = window.setTimeout(handlePrintFinished, 120000);
-                } catch (error) {
-                    console.error(error);
-                    cleanupPrintResources();
-                    showErrorScreen(currentPagedTitle, "The print screen could not open. Please try the worksheet again.");
-                }
+                showPrintReadyScreen(activePrintTitle || title);
             }, 700);
         };
 
