@@ -766,3 +766,21 @@ body {
         font-size: 21px;
     }
 }
+
+/* =========================
+   Build Version Badge
+========================= */
+
+body::before {
+    content: "v0.6.1";
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    z-index: 9999;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: rgba(11, 59, 130, 0.62);
+    pointer-events: none;
+    user-select: none;
+}
