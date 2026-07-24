@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.6</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.8</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -697,12 +697,20 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
             </div>
 
             <div style="display:flex;justify-content:center;gap:10px;width:100%;">
-                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:50px;height:50px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:.8;font-weight:800;">
-                    <span aria-hidden="true" style="font-size:25px;line-height:.7;">↶</span><span aria-hidden="true" style="font-size:12px;line-height:1;">15</span>
+                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:54px;height:54px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;align-items:center;justify-content:center;padding:5px;">
+                    <svg aria-hidden="true" viewBox="0 0 48 48" width="42" height="42" focusable="false">
+                        <path d="M14.5 15.5H7.5V8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 15.1C12.2 9.7 18.2 6.8 24.7 7.4C33.6 8.2 40.1 16.1 39.3 25C38.5 33.9 30.6 40.4 21.7 39.6C15.4 39 10 34.8 7.8 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+                        <text x="23.5" y="29.5" text-anchor="middle" fill="currentColor" font-size="14" font-weight="800" font-family="Arial, sans-serif">15</text>
+                    </svg>
                 </button>
                 <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:54px;height:54px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:23px;font-weight:700;">⏸</button>
-                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:50px;height:50px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:.8;font-weight:800;">
-                    <span aria-hidden="true" style="font-size:25px;line-height:.7;">↷</span><span aria-hidden="true" style="font-size:12px;line-height:1;">15</span>
+                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:54px;height:54px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;align-items:center;justify-content:center;padding:5px;">
+                    <svg aria-hidden="true" viewBox="0 0 48 48" width="42" height="42" focusable="false">
+                        <path d="M33.5 15.5H40.5V8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M39.5 15.1C35.8 9.7 29.8 6.8 23.3 7.4C14.4 8.2 7.9 16.1 8.7 25C9.5 33.9 17.4 40.4 26.3 39.6C32.6 39 38 34.8 40.2 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+                        <text x="24.5" y="29.5" text-anchor="middle" fill="currentColor" font-size="14" font-weight="800" font-family="Arial, sans-serif">15</text>
+                    </svg>
                 </button>
                 <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:50px;height:50px;border:0;border-radius:15px;background:#991b1b;color:#ffffff;font-size:22px;">■</button>
             </div>
