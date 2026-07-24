@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.5</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.6</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -640,7 +640,7 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         bar.style.right = "16px";
         bar.style.top = "42px";
         bar.style.bottom = "auto";
-        bar.style.width = "230px";
+        bar.style.width = "326px";
         bar.style.maxWidth = "calc(100vw - 32px)";
         bar.style.zIndex = "99998";
         bar.style.background = "#0f172a";
@@ -689,8 +689,8 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
 
             <div style="display:flex;align-items:center;gap:8px;width:100%;">
                 <span id="np-elapsed" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:left;font-variant-numeric:tabular-nums;">0:00</span>
-                <div id="np-progress-track" role="progressbar" aria-label="Story progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
-                    style="position:relative;flex:1;height:12px;border-radius:999px;background:#cbd5e1;overflow:hidden;box-shadow:inset 0 1px 2px rgba(15,23,42,.28);">
+                <div id="np-progress-track" role="slider" tabindex="0" aria-label="Story progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                    style="position:relative;flex:1;height:12px;border-radius:999px;background:#cbd5e1;overflow:hidden;box-shadow:inset 0 1px 2px rgba(15,23,42,.28);cursor:pointer;touch-action:none;">
                     <div id="np-progress-fill" style="width:0%;height:100%;border-radius:inherit;background:#2796f3;transition:width .12s linear;"></div>
                 </div>
                 <span id="np-duration" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;">0:00</span>
@@ -706,6 +706,58 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     `;
 
     const dragHandle = document.getElementById("np-drag-handle");
+    const progressTrack = document.getElementById("np-progress-track");
+
+    clampNowPlayingToViewport(bar);
+
+    if (progressTrack) {
+        const seekToPointer = event => {
+            if (!Number.isFinite(player.duration) || player.duration <= 0) {
+                return;
+            }
+
+            const rect = progressTrack.getBoundingClientRect();
+            const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+            player.currentTime = fraction * player.duration;
+            updateNowPlayingProgress();
+        };
+
+        progressTrack.addEventListener("pointerdown", event => {
+            event.preventDefault();
+            seekToPointer(event);
+            progressTrack.setPointerCapture(event.pointerId);
+        });
+
+        progressTrack.addEventListener("pointermove", event => {
+            if (progressTrack.hasPointerCapture(event.pointerId)) {
+                seekToPointer(event);
+            }
+        });
+
+        progressTrack.addEventListener("keydown", event => {
+            if (!Number.isFinite(player.duration) || player.duration <= 0) {
+                return;
+            }
+
+            if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+                event.preventDefault();
+                player.currentTime = Math.max(0, player.currentTime - 15);
+                updateNowPlayingProgress();
+            } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+                event.preventDefault();
+                player.currentTime = Math.min(player.duration, player.currentTime + 15);
+                updateNowPlayingProgress();
+            } else if (event.key === "Home") {
+                event.preventDefault();
+                player.currentTime = 0;
+                updateNowPlayingProgress();
+            } else if (event.key === "End") {
+                event.preventDefault();
+                player.currentTime = player.duration;
+                updateNowPlayingProgress(true);
+            }
+        });
+    }
 
     if (dragHandle) {
         dragHandle.addEventListener("pointerdown", event => {
@@ -773,6 +825,24 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
             updateNowPlayingButton();
         });
     }
+}
+
+
+function clampNowPlayingToViewport(bar) {
+    if (!bar) {
+        return;
+    }
+
+    const rect = bar.getBoundingClientRect();
+    const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+    const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+    const nextLeft = Math.max(8, Math.min(maxLeft, rect.left));
+    const nextTop = Math.max(8, Math.min(maxTop, rect.top));
+
+    bar.style.left = `${nextLeft}px`;
+    bar.style.right = "auto";
+    bar.style.top = `${nextTop}px`;
+    bar.style.bottom = "auto";
 }
 
 
