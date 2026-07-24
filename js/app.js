@@ -697,10 +697,14 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
             </div>
 
             <div style="display:flex;justify-content:center;gap:10px;width:100%;">
-                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:42px;height:42px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:20px;">⏪</button>
-                <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:46px;height:46px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:21px;font-weight:700;">⏸</button>
-                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:42px;height:42px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:20px;">⏩</button>
-                <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:42px;height:42px;border:0;border-radius:12px;background:#7f1d1d;color:#ffffff;font-size:20px;">⏹</button>
+                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:50px;height:50px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:.8;font-weight:800;">
+                    <span aria-hidden="true" style="font-size:25px;line-height:.7;">↶</span><span aria-hidden="true" style="font-size:12px;line-height:1;">15</span>
+                </button>
+                <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:54px;height:54px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:23px;font-weight:700;">⏸</button>
+                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:50px;height:50px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:.8;font-weight:800;">
+                    <span aria-hidden="true" style="font-size:25px;line-height:.7;">↷</span><span aria-hidden="true" style="font-size:12px;line-height:1;">15</span>
+                </button>
+                <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:50px;height:50px;border:0;border-radius:15px;background:#991b1b;color:#ffffff;font-size:22px;">■</button>
             </div>
         </div>
     `;
@@ -711,26 +715,58 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     clampNowPlayingToViewport(bar);
 
     if (progressTrack) {
+        let isScrubbing = false;
+
         const seekToPointer = event => {
             if (!Number.isFinite(player.duration) || player.duration <= 0) {
                 return;
             }
 
             const rect = progressTrack.getBoundingClientRect();
+            if (rect.width <= 0) {
+                return;
+            }
+
             const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
             player.currentTime = fraction * player.duration;
             updateNowPlayingProgress();
         };
 
+        const finishScrubbing = event => {
+            if (!isScrubbing) {
+                return;
+            }
+
+            isScrubbing = false;
+            seekToPointer(event);
+
+            if (progressTrack.hasPointerCapture(event.pointerId)) {
+                progressTrack.releasePointerCapture(event.pointerId);
+            }
+        };
+
         progressTrack.addEventListener("pointerdown", event => {
             event.preventDefault();
-            seekToPointer(event);
+            event.stopPropagation();
+            isScrubbing = true;
             progressTrack.setPointerCapture(event.pointerId);
+            seekToPointer(event);
         });
 
         progressTrack.addEventListener("pointermove", event => {
+            if (!isScrubbing) {
+                return;
+            }
+
+            event.preventDefault();
+            seekToPointer(event);
+        });
+
+        progressTrack.addEventListener("pointerup", finishScrubbing);
+        progressTrack.addEventListener("pointercancel", event => {
+            isScrubbing = false;
             if (progressTrack.hasPointerCapture(event.pointerId)) {
-                seekToPointer(event);
+                progressTrack.releasePointerCapture(event.pointerId);
             }
         });
 
@@ -803,9 +839,9 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
 
     player.onplay = updateNowPlayingButton;
     player.onpause = updateNowPlayingButton;
-    player.onloadedmetadata = updateNowPlayingProgress;
-    player.ondurationchange = updateNowPlayingProgress;
-    player.ontimeupdate = updateNowPlayingProgress;
+    player.onloadedmetadata = () => updateNowPlayingProgress();
+    player.ondurationchange = () => updateNowPlayingProgress();
+    player.ontimeupdate = () => updateNowPlayingProgress();
     player.onended = () => {
         updateNowPlayingProgress(true);
         updateNowPlayingButton();
