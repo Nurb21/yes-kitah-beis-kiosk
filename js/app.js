@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.10</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.11</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -855,15 +855,13 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         updateNowPlayingButton();
     };
 
-    // Start the newly selected story directly from the user's tap.
-    // Do not set currentTime until metadata exists: Safari and Chrome can throw
-    // InvalidStateError here, which prevents load/play and leaves both times at 0:00.
+    // Restore the known-working v0.6.7 source reset and load sequence.
     player.pause();
-    player.autoplay = true;
-    player.setAttribute("playsinline", "");
-    player.dataset.audioUrl = audioUrl;
-    player.src = audioUrl;
+    player.removeAttribute("src");
+    player.load();
     updateNowPlayingProgress();
+    player.src = audioUrl;
+    player.load();
 
     const playPromise = player.play();
     if (playPromise && typeof playPromise.catch === "function") {
@@ -968,21 +966,7 @@ function toggleNowPlaying() {
     }
 
     if (player.paused || player.ended) {
-        const audioUrl = player.dataset.audioUrl || player.getAttribute("src") || "";
-
-        if (!audioUrl) {
-            console.warn("Playback could not start because no audio source is selected.");
-            return;
-        }
-
-        if (!player.getAttribute("src") || player.error) {
-            player.src = audioUrl;
-        }
-
-        player.play().catch(error => {
-            console.warn("Playback could not start.", error);
-            updateNowPlayingButton();
-        });
+        player.play().catch(error => console.warn("Playback could not start.", error));
     } else {
         player.pause();
     }
