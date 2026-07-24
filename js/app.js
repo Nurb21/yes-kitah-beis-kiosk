@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.8</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.9</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -856,10 +856,12 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     };
 
     player.pause();
-    player.removeAttribute("src");
-    player.load();
-    updateNowPlayingProgress();
+    player.autoplay = true;
+    player.setAttribute("playsinline", "");
+    player.dataset.audioUrl = audioUrl;
     player.src = audioUrl;
+    player.currentTime = 0;
+    updateNowPlayingProgress();
     player.load();
 
     const playPromise = player.play();
@@ -965,7 +967,22 @@ function toggleNowPlaying() {
     }
 
     if (player.paused || player.ended) {
-        player.play().catch(error => console.warn("Playback could not start.", error));
+        const audioUrl = player.dataset.audioUrl || player.getAttribute("src") || "";
+
+        if (!audioUrl) {
+            console.warn("Playback could not start because no audio source is selected.");
+            return;
+        }
+
+        if (!player.getAttribute("src") || player.error) {
+            player.src = audioUrl;
+            player.load();
+        }
+
+        player.play().catch(error => {
+            console.warn("Playback could not start.", error);
+            updateNowPlayingButton();
+        });
     } else {
         player.pause();
     }
