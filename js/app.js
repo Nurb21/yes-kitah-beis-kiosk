@@ -636,16 +636,18 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         bar.id = "now-playing";
         bar.setAttribute("aria-label", "Now playing");
         bar.style.position = "fixed";
-        bar.style.left = "12px";
-        bar.style.right = "12px";
-        bar.style.bottom = "12px";
+        bar.style.left = "16px";
+        bar.style.right = "auto";
+        bar.style.top = "42px";
+        bar.style.bottom = "auto";
+        bar.style.width = "230px";
+        bar.style.maxWidth = "calc(100vw - 32px)";
         bar.style.zIndex = "99998";
         bar.style.background = "#0f172a";
         bar.style.color = "#ffffff";
         bar.style.padding = "12px";
         bar.style.borderRadius = "16px";
         bar.style.boxShadow = "0 8px 24px rgba(15, 23, 42, 0.35)";
-        document.body.appendChild(bar);
     }
 
     const artwork = coverUrl
