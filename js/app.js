@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.9</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.10</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -855,14 +855,15 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         updateNowPlayingButton();
     };
 
+    // Start the newly selected story directly from the user's tap.
+    // Do not set currentTime until metadata exists: Safari and Chrome can throw
+    // InvalidStateError here, which prevents load/play and leaves both times at 0:00.
     player.pause();
     player.autoplay = true;
     player.setAttribute("playsinline", "");
     player.dataset.audioUrl = audioUrl;
     player.src = audioUrl;
-    player.currentTime = 0;
     updateNowPlayingProgress();
-    player.load();
 
     const playPromise = player.play();
     if (playPromise && typeof playPromise.catch === "function") {
@@ -976,7 +977,6 @@ function toggleNowPlaying() {
 
         if (!player.getAttribute("src") || player.error) {
             player.src = audioUrl;
-            player.load();
         }
 
         player.play().catch(error => {
