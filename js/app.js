@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.1</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.2</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -619,35 +619,116 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     const coverUrl = decodeURIComponent(encodedCoverUrl || "");
     const audioUrl = decodeURIComponent(encodedAudioUrl);
 
-    const cover = coverUrl
-        ? `<img src="${coverUrl}" alt="" class="player-cover-image">`
-        : `<span class="player-cover-placeholder">🎧</span>`;
+    let player = document.getElementById("global-audio");
 
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="goBackToCurrentFolder()">←</button>
-            <h1>🎧 Listening</h1>
-        </header>
+    if (!player) {
+        player = document.createElement("audio");
+        player.id = "global-audio";
+        player.preload = "auto";
+        player.style.display = "none";
+        document.body.appendChild(player);
+    }
 
-        <section class="audio-player-screen">
-            <article class="audio-player-card">
-                <div class="player-cover">
-                    ${cover}
-                </div>
+    let bar = document.getElementById("now-playing");
 
-                <h2>${title}</h2>
+    if (!bar) {
+        bar = document.createElement("section");
+        bar.id = "now-playing";
+        bar.setAttribute("aria-label", "Now playing");
+        bar.style.position = "fixed";
+        bar.style.left = "12px";
+        bar.style.right = "12px";
+        bar.style.bottom = "12px";
+        bar.style.zIndex = "99998";
+        bar.style.background = "#0f172a";
+        bar.style.color = "#ffffff";
+        bar.style.padding = "12px";
+        bar.style.borderRadius = "16px";
+        bar.style.boxShadow = "0 8px 24px rgba(15, 23, 42, 0.35)";
+        document.body.appendChild(bar);
+    }
 
-                <audio class="story-audio" controls autoplay onended="showAudioFinished('${encodeURIComponent(title)}')">
-                    <source src="${audioUrl}">
-                    Your browser does not support audio playback.
-                </audio>
+    const artwork = coverUrl
+        ? `<img src="${coverUrl}" alt="" style="width:58px;height:58px;border-radius:10px;object-fit:cover;flex:0 0 auto;">`
+        : `<div aria-hidden="true" style="width:58px;height:58px;border-radius:10px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 auto;">🎧</div>`;
 
-                <button class="large-home-button" type="button" onclick="showHome()">
-                    ⌂ Home
-                </button>
-            </article>
-        </section>
+    bar.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;">
+            ${artwork}
+
+            <div style="min-width:0;flex:1;">
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#cbd5e1;">Now Playing</div>
+                <div style="font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
+                <progress id="np-progress" value="0" max="100" style="width:100%;height:10px;margin-top:7px;"></progress>
+            </div>
+
+            <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:48px;height:48px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;">⏸</button>
+            <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:44px;height:44px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:22px;cursor:pointer;">✕</button>
+        </div>
     `;
+
+    player.onplay = updateNowPlayingButton;
+    player.onpause = updateNowPlayingButton;
+    player.onended = () => {
+        const progress = document.getElementById("np-progress");
+        if (progress) {
+            progress.value = 100;
+        }
+        updateNowPlayingButton();
+    };
+
+    player.src = audioUrl;
+    player.load();
+
+    const playPromise = player.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(error => {
+            console.warn("Autoplay was blocked. Tap Play to begin.", error);
+            updateNowPlayingButton();
+        });
+    }
+}
+
+function updateNowPlayingButton() {
+    const player = document.getElementById("global-audio");
+    const button = document.getElementById("np-play-pause");
+
+    if (!player || !button) {
+        return;
+    }
+
+    const isPlaying = !player.paused && !player.ended;
+    button.textContent = isPlaying ? "⏸" : "▶";
+    button.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
+}
+
+function toggleNowPlaying() {
+    const player = document.getElementById("global-audio");
+
+    if (!player) {
+        return;
+    }
+
+    if (player.paused || player.ended) {
+        player.play().catch(error => console.warn("Playback could not start.", error));
+    } else {
+        player.pause();
+    }
+}
+
+function stopNowPlaying() {
+    const player = document.getElementById("global-audio");
+    const bar = document.getElementById("now-playing");
+
+    if (player) {
+        player.pause();
+        player.removeAttribute("src");
+        player.load();
+    }
+
+    if (bar) {
+        bar.remove();
+    }
 }
 
 function goBackToCurrentFolder() {
@@ -659,10 +740,17 @@ function goBackToCurrentFolder() {
     }
 
     loadDriveFolder(currentFolder.folderId, currentFolder.title, false);
-}
+}global-audio
 
 function showAudioFinished(encodedTitle) {
     const title = decodeURIComponent(encodedTitle);
+
+    player.ontimeupdate = () => {
+    const progress = document.getElementById("np-progress");
+    if (progress && player.duration) {
+        progress.value = (player.currentTime / player.duration) * 100;
+    }
+};
 
     appElement.innerHTML = `
         <header class="screen-header">
