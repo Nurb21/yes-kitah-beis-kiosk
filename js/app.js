@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.2</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.4</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -636,8 +636,8 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         bar.id = "now-playing";
         bar.setAttribute("aria-label", "Now playing");
         bar.style.position = "fixed";
-        bar.style.left = "16px";
-        bar.style.right = "auto";
+        bar.style.left = "auto";
+        bar.style.right = "16px";
         bar.style.top = "42px";
         bar.style.bottom = "auto";
         bar.style.width = "230px";
@@ -649,10 +649,34 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         bar.style.borderRadius = "16px";
         bar.style.boxShadow = "0 8px 24px rgba(15, 23, 42, 0.35)";
         document.body.appendChild(bar);
+
+        const savedPosition = sessionStorage.getItem("yes-now-playing-position");
+        if (savedPosition) {
+            try {
+                const position = JSON.parse(savedPosition);
+                if (Number.isFinite(position.left) && Number.isFinite(position.top)) {
+                    bar.style.left = `${position.left}px`;
+                    bar.style.right = "auto";
+                    bar.style.top = `${position.top}px`;
+                }
+            } catch (error) {
+                console.warn("Could not restore the player position.", error);
+            }
+        }
     }
 
     bar.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+                <div id="np-drag-handle" role="button" tabindex="0" aria-label="Drag player"
+                    style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;padding:5px 7px;border-radius:9px;background:#1e293b;color:#cbd5e1;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;cursor:grab;touch-action:none;user-select:none;">
+                    <span aria-hidden="true" style="font-size:17px;line-height:1;">☰</span>
+                    <span>Drag to move</span>
+                </div>
+                <button type="button" onclick="stopNowPlaying()" aria-label="Close player"
+                    style="width:32px;height:32px;border:0;border-radius:9px;background:#334155;color:#ffffff;font-size:18px;line-height:1;flex:0 0 auto;">×</button>
+            </div>
+
             ${coverUrl
                 ? `<img src="${coverUrl}" alt="" style="width:130px;height:130px;border-radius:14px;object-fit:cover;">`
                 : `<div aria-hidden="true" style="width:130px;height:130px;border-radius:14px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:54px;">🎧</div>`
@@ -674,6 +698,50 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         </div>
     `;
 
+    const dragHandle = document.getElementById("np-drag-handle");
+
+    if (dragHandle) {
+        dragHandle.addEventListener("pointerdown", event => {
+            event.preventDefault();
+
+            const rect = bar.getBoundingClientRect();
+            const offsetX = event.clientX - rect.left;
+            const offsetY = event.clientY - rect.top;
+
+            dragHandle.style.cursor = "grabbing";
+            dragHandle.setPointerCapture(event.pointerId);
+
+            const movePlayer = moveEvent => {
+                const maxLeft = Math.max(8, window.innerWidth - bar.offsetWidth - 8);
+                const maxTop = Math.max(8, window.innerHeight - bar.offsetHeight - 8);
+                const nextLeft = Math.max(8, Math.min(maxLeft, moveEvent.clientX - offsetX));
+                const nextTop = Math.max(8, Math.min(maxTop, moveEvent.clientY - offsetY));
+
+                bar.style.left = `${nextLeft}px`;
+                bar.style.right = "auto";
+                bar.style.top = `${nextTop}px`;
+                bar.style.bottom = "auto";
+            };
+
+            const finishDrag = () => {
+                dragHandle.style.cursor = "grab";
+                dragHandle.removeEventListener("pointermove", movePlayer);
+                dragHandle.removeEventListener("pointerup", finishDrag);
+                dragHandle.removeEventListener("pointercancel", finishDrag);
+
+                const finalRect = bar.getBoundingClientRect();
+                sessionStorage.setItem("yes-now-playing-position", JSON.stringify({
+                    left: Math.round(finalRect.left),
+                    top: Math.round(finalRect.top)
+                }));
+            };
+
+            dragHandle.addEventListener("pointermove", movePlayer);
+            dragHandle.addEventListener("pointerup", finishDrag);
+            dragHandle.addEventListener("pointercancel", finishDrag);
+        });
+    }
+
     player.onplay = updateNowPlayingButton;
     player.onpause = updateNowPlayingButton;
     player.onended = () => {
@@ -691,13 +759,13 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         }
     };
 
+    player.pause();
     player.src = audioUrl;
-    player.load();
 
     const playPromise = player.play();
     if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch(error => {
-            console.warn("Autoplay was blocked. Tap Play to begin.", error);
+            console.warn("Playback could not start automatically. Tap Play to begin.", error);
             updateNowPlayingButton();
         });
     }
