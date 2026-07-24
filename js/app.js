@@ -44,7 +44,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.4</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.5</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -687,7 +687,14 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
                 <div style="font-size:16px;font-weight:800;line-height:1.2;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
             </div>
 
-            <progress id="np-progress" value="0" max="100" style="width:100%;height:8px;"></progress>
+            <div style="display:flex;align-items:center;gap:8px;width:100%;">
+                <span id="np-elapsed" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:left;font-variant-numeric:tabular-nums;">0:00</span>
+                <div id="np-progress-track" role="progressbar" aria-label="Story progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                    style="position:relative;flex:1;height:12px;border-radius:999px;background:#cbd5e1;overflow:hidden;box-shadow:inset 0 1px 2px rgba(15,23,42,.28);">
+                    <div id="np-progress-fill" style="width:0%;height:100%;border-radius:inherit;background:#2796f3;transition:width .12s linear;"></div>
+                </div>
+                <span id="np-duration" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;">0:00</span>
+            </div>
 
             <div style="display:flex;justify-content:center;gap:10px;width:100%;">
                 <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:42px;height:42px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:20px;">⏪</button>
@@ -744,23 +751,20 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
 
     player.onplay = updateNowPlayingButton;
     player.onpause = updateNowPlayingButton;
+    player.onloadedmetadata = updateNowPlayingProgress;
+    player.ondurationchange = updateNowPlayingProgress;
+    player.ontimeupdate = updateNowPlayingProgress;
     player.onended = () => {
-        const progress = document.getElementById("np-progress");
-        if (progress) {
-            progress.value = 100;
-        }
+        updateNowPlayingProgress(true);
         updateNowPlayingButton();
     };
 
-    player.ontimeupdate = () => {
-        const progress = document.getElementById("np-progress");
-        if (progress && Number.isFinite(player.duration) && player.duration > 0) {
-            progress.value = (player.currentTime / player.duration) * 100;
-        }
-    };
-
     player.pause();
+    player.removeAttribute("src");
+    player.load();
+    updateNowPlayingProgress();
     player.src = audioUrl;
+    player.load();
 
     const playPromise = player.play();
     if (playPromise && typeof playPromise.catch === "function") {
@@ -768,6 +772,61 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
             console.warn("Playback could not start automatically. Tap Play to begin.", error);
             updateNowPlayingButton();
         });
+    }
+}
+
+
+function formatAudioTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+        return "0:00";
+    }
+
+    const wholeSeconds = Math.floor(seconds);
+    const hours = Math.floor(wholeSeconds / 3600);
+    const minutes = Math.floor((wholeSeconds % 3600) / 60);
+    const remainingSeconds = wholeSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function updateNowPlayingProgress(forceComplete = false) {
+    const player = document.getElementById("global-audio");
+    const elapsed = document.getElementById("np-elapsed");
+    const duration = document.getElementById("np-duration");
+    const track = document.getElementById("np-progress-track");
+    const fill = document.getElementById("np-progress-fill");
+
+    if (!player) {
+        return;
+    }
+
+    const hasDuration = Number.isFinite(player.duration) && player.duration > 0;
+    const totalSeconds = hasDuration ? player.duration : 0;
+    const currentSeconds = forceComplete && hasDuration
+        ? totalSeconds
+        : Math.max(0, Number.isFinite(player.currentTime) ? player.currentTime : 0);
+    const percentage = hasDuration
+        ? Math.max(0, Math.min(100, (currentSeconds / totalSeconds) * 100))
+        : 0;
+
+    if (elapsed) {
+        elapsed.textContent = formatAudioTime(currentSeconds);
+    }
+
+    if (duration) {
+        duration.textContent = formatAudioTime(totalSeconds);
+    }
+
+    if (fill) {
+        fill.style.width = `${percentage}%`;
+    }
+
+    if (track) {
+        track.setAttribute("aria-valuenow", String(Math.round(percentage)));
     }
 }
 
