@@ -677,6 +677,13 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         updateNowPlayingButton();
     };
 
+    player.ontimeupdate = () => {
+        const progress = document.getElementById("np-progress");
+        if (progress && Number.isFinite(player.duration) && player.duration > 0) {
+            progress.value = (player.currentTime / player.duration) * 100;
+        }
+    };
+
     player.src = audioUrl;
     player.load();
 
@@ -740,17 +747,10 @@ function goBackToCurrentFolder() {
     }
 
     loadDriveFolder(currentFolder.folderId, currentFolder.title, false);
-}global-audio
+}
 
 function showAudioFinished(encodedTitle) {
     const title = decodeURIComponent(encodedTitle);
-
-    player.ontimeupdate = () => {
-    const progress = document.getElementById("np-progress");
-    if (progress && player.duration) {
-        progress.value = (player.currentTime / player.duration) * 100;
-    }
-};
 
     appElement.innerHTML = `
         <header class="screen-header">
