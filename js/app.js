@@ -648,24 +648,29 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
         bar.style.padding = "12px";
         bar.style.borderRadius = "16px";
         bar.style.boxShadow = "0 8px 24px rgba(15, 23, 42, 0.35)";
+        document.body.appendChild(bar);
     }
 
-    const artwork = coverUrl
-        ? `<img src="${coverUrl}" alt="" style="width:58px;height:58px;border-radius:10px;object-fit:cover;flex:0 0 auto;">`
-        : `<div aria-hidden="true" style="width:58px;height:58px;border-radius:10px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 auto;">🎧</div>`;
-
     bar.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;">
-            ${artwork}
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            ${coverUrl
+                ? `<img src="${coverUrl}" alt="" style="width:130px;height:130px;border-radius:14px;object-fit:cover;">`
+                : `<div aria-hidden="true" style="width:130px;height:130px;border-radius:14px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:54px;">🎧</div>`
+            }
 
-            <div style="min-width:0;flex:1;">
-                <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#cbd5e1;">Now Playing</div>
-                <div style="font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
-                <progress id="np-progress" value="0" max="100" style="width:100%;height:10px;margin-top:7px;"></progress>
+            <div style="width:100%;text-align:center;">
+                <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#cbd5e1;">Now Playing</div>
+                <div style="font-size:16px;font-weight:800;line-height:1.2;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
             </div>
 
-            <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:48px;height:48px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;">⏸</button>
-            <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:44px;height:44px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:22px;cursor:pointer;">✕</button>
+            <progress id="np-progress" value="0" max="100" style="width:100%;height:8px;"></progress>
+
+            <div style="display:flex;justify-content:center;gap:10px;width:100%;">
+                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:42px;height:42px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:20px;">⏪</button>
+                <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:46px;height:46px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:21px;font-weight:700;">⏸</button>
+                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:42px;height:42px;border:0;border-radius:12px;background:#334155;color:#ffffff;font-size:20px;">⏩</button>
+                <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:42px;height:42px;border:0;border-radius:12px;background:#7f1d1d;color:#ffffff;font-size:20px;">⏹</button>
+            </div>
         </div>
     `;
 
@@ -722,6 +727,28 @@ function toggleNowPlaying() {
         player.play().catch(error => console.warn("Playback could not start.", error));
     } else {
         player.pause();
+    }
+}
+
+function rewindNowPlaying() {
+    const player = document.getElementById("global-audio");
+
+    if (!player) {
+        return;
+    }
+
+    player.currentTime = Math.max(0, player.currentTime - 15);
+}
+
+function forwardNowPlaying() {
+    const player = document.getElementById("global-audio");
+
+    if (!player) {
+        return;
+    }
+
+    if (Number.isFinite(player.duration)) {
+        player.currentTime = Math.min(player.duration, player.currentTime + 15);
     }
 }
 
