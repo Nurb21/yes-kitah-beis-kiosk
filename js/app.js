@@ -1,1225 +1,164 @@
-const fallbackConfig = {
-    googleDrive: {
-        apiKey: "PASTE_GOOGLE_DRIVE_API_KEY_HERE"
-    },
-    print: [
-        { name: "Mazes", icon: "🧩", folderId: "1v_0cM3lU3y0Gusdr_ea4ITq9qKWFAi70" },
-        { name: "Coloring Pages", icon: "🖍️", folderId: "1tbAnhtUo3B4ZfzW50RO3y2xVTdEmONRD" },
-        { name: "Color by Number", icon: "🎨", folderId: "1UK08nGzaD_7Nqyzm5UzjEHwbV4AoQsTH" },
-        { name: "Dot-to-Dot", icon: "🔢", folderId: "1YQ0_cSGMTRRYBnYNa_FnJrDDT1t_VVPA" }
-    ],
-    listen: [
-        { name: "Stories", icon: "📖", folderId: "19EsqBYU0o3DhhvqemRYjc--VrTUkPF9n" },
-        { name: "Music", icon: "🎵", folderId: "1ehU9axJuTeF1qQFjcbRfjCcyUG_K9uE1" }
-    ]
-};
+const STUDENTS_SHEET = 'Students';
+const PRINT_LOG_SHEET = 'Print Log';
 
-const ITEMS_PER_PAGE = 6;
-const PRINT_LOG_WEB_APP_URL = "https://script.google.com/a/macros/yesmilwaukee.org/s/AKfycbwfN8gG1WhH1mudrktUBSXp3kAhtS54fCo6Cday2q2937IL-nmbiUZX9hgBcY1MNQG8/exec";
+function doGet(e) {
+  try {
+    const action = String(
+      (e && e.parameter && e.parameter.action) || ''
+    ).trim();
 
-let config = fallbackConfig;
-let currentBrowseType = "";
-let browseHistory = [];
-let currentPagedItems = [];
-let currentPagedTitle = "";
-let currentPage = 1;
-let activePrintFrame = null;
-let activePrintObjectUrl = "";
-let printCleanupTimer = null;
-let activePrintTitle = "";
-let activePrintCategory = "";
+    const callback = String(
+      (e && e.parameter && e.parameter.callback) || ''
+    ).trim();
 
-const appElement = document.querySelector(".home-screen");
-
-async function init() {
-    try {
-        config = await loadConfig();
-    } catch (error) {
-        console.warn("Config failed. Using fallback.", error);
+    if (action === 'students') {
+      return sendResponse({
+        ok: true,
+        students: getStudents()
+      }, callback);
     }
 
-    showHome();
-}
+    if (action === 'log') {
+      const lock = LockService.getScriptLock();
 
-function showHome() {
-    browseHistory = [];
-    currentPage = 1;
+      try {
+        lock.waitLock(10000);
 
-    appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.12</div>
+        const studentName = String(e.parameter.studentName || '').trim();
+        const worksheetName = String(e.parameter.worksheetName || '').trim();
+        const printCategory = String(e.parameter.printCategory || '').trim();
 
-        <header class="brand">
-            <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
-            <h1>YES Kitah Beis</h1>
-        </header>
-
-        <section class="home-actions">
-            <button class="big-button print-button" type="button" onclick="showPrint()">
-                <span class="button-icon">🖨️</span>
-                <span>PRINT</span>
-            </button>
-
-            <button class="big-button listen-button" type="button" onclick="showListen()">
-                <span class="button-icon">🎧</span>
-                <span>LISTEN</span>
-            </button>
-        </section>
-    `;
-}
-
-function buildCategoryCards(items, type) {
-    return items.map(item => `
-        <button class="category-card" type="button" onclick="openCategory('${type}', '${encodeURIComponent(item.name)}')">
-            <span class="category-icon">${item.icon}</span>
-            <span>${item.name}</span>
-        </button>
-    `).join("");
-}
-
-function showPrint() {
-    browseHistory = [];
-    currentPage = 1;
-    activePrintCategory = "";
-
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="showHome()">⌂</button>
-            <h1>🖨️ Print Center</h1>
-        </header>
-
-        <section class="category-grid">
-            ${buildCategoryCards(config.print, "print")}
-        </section>
-    `;
-}
-
-function showListen() {
-    browseHistory = [];
-    currentPage = 1;
-
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="showHome()">⌂</button>
-            <h1>🎧 Listening Center</h1>
-        </header>
-
-        <section class="category-grid listening-category-grid">
-            ${buildCategoryCards(config.listen, "listen")}
-        </section>
-    `;
-}
-
-function getCategory(type, categoryName) {
-    const categories = config[type] || [];
-    return categories.find(item => item.name === categoryName);
-}
-
-function getBackAction() {
-    return browseHistory.length > 1
-        ? "goBack()"
-        : currentBrowseType === "print"
-            ? "showPrint()"
-            : "showListen()";
-}
-
-function showLoadingScreen(title) {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
-        </header>
-
-        <section class="status-panel">
-            <div class="status-icon">⏳</div>
-            <h2>Loading...</h2>
-            <p>Getting classroom choices from Google Drive.</p>
-        </section>
-    `;
-}
-
-function showErrorScreen(title, message) {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
-        </header>
-
-        <section class="status-panel error-panel">
-            <div class="status-icon">⚠️</div>
-            <h2>Something went wrong</h2>
-            <p>${message}</p>
-            <button class="small-action-button" type="button" onclick="reloadCurrentFolder()">
-                Try Again
-            </button>
-        </section>
-    `;
-}
-
-function showEmptyScreen(title) {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${title}</h1>
-        </header>
-
-        <section class="status-panel">
-            <div class="status-icon">📭</div>
-            <h2>No files yet</h2>
-            <p>Add files to this Google Drive folder, then try again.</p>
-        </section>
-    `;
-}
-
-function buildDriveItemCards(items) {
-    return items.map(item => {
-        const preview = item.thumbnailUrl
-            ? `<img src="${item.thumbnailUrl}" alt="" class="file-thumbnail">`
-            : `<span class="file-icon">${item.icon}</span>`;
-
-        const action = item.isFolder
-            ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
-            : item.isAudio
-                ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
-                : currentBrowseType === "print" && item.mimeType === "application/pdf"
-                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
-                    : `openDriveFile('${item.openUrl}')`;
-
-        return `
-            <button class="file-card" type="button" onclick="${action}">
-                <span class="file-preview">
-                    ${preview}
-                </span>
-                <span class="file-title">${item.title}</span>
-            </button>
-        `;
-    }).join("");
-}
-
-function buildStoryCards(items) {
-    return items.map(item => {
-        if (item.type === "story") {
-            const cover = item.coverUrl
-                ? `<img src="${item.coverUrl}" alt="" class="story-cover-image">`
-                : `<span class="story-cover-placeholder">🎧</span>`;
-
-            return `
-                <button class="story-card" type="button" onclick="openAudioPlayer('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.coverUrl)}', '${encodeURIComponent(item.audioUrl)}')">
-                    <span class="story-cover">
-                        ${cover}
-                    </span>
-                    <span class="story-title">${item.title}</span>
-                </button>
-            `;
+        if (!studentName || !worksheetName || !printCategory) {
+          throw new Error(
+            'Missing studentName, worksheetName, or printCategory.'
+          );
         }
 
-        const preview = item.thumbnailUrl
-            ? `<img src="${item.thumbnailUrl}" alt="" class="file-thumbnail">`
-            : `<span class="file-icon">${item.icon}</span>`;
+        const students = getStudents();
 
-        const action = item.isFolder
-            ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
-            : item.isAudio
-                ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
-                : currentBrowseType === "print" && item.mimeType === "application/pdf"
-                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
-                    : `openDriveFile('${item.openUrl}')`;
-
-        return `
-            <button class="file-card" type="button" onclick="${action}">
-                <span class="file-preview">
-                    ${preview}
-                </span>
-                <span class="file-title">${item.title}</span>
-            </button>
-        `;
-    }).join("");
-}
-
-function showDriveBrowser(title, items) {
-    currentPagedTitle = title;
-    currentPagedItems = items;
-    currentPage = 1;
-    renderPagedDriveBrowser();
-}
-
-function showStoryBrowser(title, stories, regularItems) {
-    currentPagedTitle = title;
-    currentPagedItems = [...stories, ...regularItems];
-    currentPage = 1;
-    renderPagedStoryBrowser();
-}
-
-function getTotalPages() {
-    return Math.max(1, Math.ceil(currentPagedItems.length / ITEMS_PER_PAGE));
-}
-
-function getCurrentPageItems() {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return currentPagedItems.slice(start, start + ITEMS_PER_PAGE);
-}
-
-function renderPaginationControls(renderFunctionName) {
-    const totalPages = getTotalPages();
-
-    if (totalPages <= 1) {
-        return "";
-    }
-
-    const previousDisabled = currentPage === 1 ? "disabled" : "";
-    const nextDisabled = currentPage === totalPages ? "disabled" : "";
-
-    return `
-        <nav class="pagination-bar">
-            <button class="page-button" type="button" onclick="previousPage('${renderFunctionName}')" ${previousDisabled}>
-                ← Previous
-            </button>
-
-            <span class="page-label">Page ${currentPage} of ${totalPages}</span>
-
-            <button class="page-button" type="button" onclick="nextPage('${renderFunctionName}')" ${nextDisabled}>
-                Next →
-            </button>
-        </nav>
-    `;
-}
-
-function renderPagedDriveBrowser() {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${currentPagedTitle}</h1>
-        </header>
-
-        <section class="file-grid">
-            ${buildDriveItemCards(getCurrentPageItems())}
-        </section>
-
-        ${renderPaginationControls("drive")}
-    `;
-}
-
-function renderPagedStoryBrowser() {
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="${getBackAction()}">←</button>
-            <h1>${currentPagedTitle}</h1>
-        </header>
-
-        <section class="story-grid">
-            ${buildStoryCards(getCurrentPageItems())}
-        </section>
-
-        <div class="story-pagination-bottom">
-            ${renderPaginationControls("story")}
-        </div>
-    `;
-}
-
-function previousPage(type) {
-    if (currentPage <= 1) {
-        return;
-    }
-
-    currentPage -= 1;
-
-    if (type === "story") {
-        renderPagedStoryBrowser();
-    } else {
-        renderPagedDriveBrowser();
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function nextPage(type) {
-    const totalPages = getTotalPages();
-
-    if (currentPage >= totalPages) {
-        return;
-    }
-
-    currentPage += 1;
-
-    if (type === "story") {
-        renderPagedStoryBrowser();
-    } else {
-        renderPagedDriveBrowser();
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-async function loadDriveFolder(folderId, title, shouldPushHistory = true) {
-    if (shouldPushHistory) {
-        browseHistory.push({ folderId, title });
-    }
-
-    showLoadingScreen(title);
-
-    try {
-        const items = await getDriveItems(config, folderId);
-
-        if (!items.length) {
-            showEmptyScreen(title);
-            return;
+        if (!students.includes(studentName)) {
+          throw new Error(
+            'Student name was not found in the Students sheet.'
+          );
         }
 
-        if (currentBrowseType === "listen") {
-            await showListeningFolder(title, items);
-            return;
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        const logSheet = ss.getSheetByName(PRINT_LOG_SHEET);
+
+        if (!logSheet) {
+          throw new Error(
+            `Sheet "${PRINT_LOG_SHEET}" was not found.`
+          );
         }
 
-        showDriveBrowser(title, items);
-    } catch (error) {
-        console.error(error);
-        showErrorScreen(title, error.message);
+        const now = new Date();
+        const timezone = ss.getSpreadsheetTimeZone();
+
+        const date = Utilities.formatDate(
+          now,
+          timezone,
+          'MM/dd/yyyy'
+        );
+
+        const time = Utilities.formatDate(
+          now,
+          timezone,
+          'h:mm:ss a'
+        );
+
+        const total =
+          getStudentPrintTotal(logSheet, studentName) + 1;
+
+        logSheet.appendRow([
+          date,
+          time,
+          studentName,
+          worksheetName,
+          printCategory,
+          total
+        ]);
+
+        return sendResponse({
+          ok: true,
+          studentName: studentName,
+          total: total
+        }, callback);
+
+      } finally {
+        try {
+          lock.releaseLock();
+        } catch (error) {
+          // No lock to release.
+        }
+      }
     }
+
+    return sendResponse({
+      ok: true,
+      message: 'Kitah Beis Kiosk Print Log API is running'
+    }, callback);
+
+  } catch (error) {
+    return sendResponse({
+      ok: false,
+      error: error.message
+    }, String(
+      (e && e.parameter && e.parameter.callback) || ''
+    ).trim());
+  }
 }
 
-async function showListeningFolder(title, items) {
-    const folders = items.filter(item => item.isFolder);
-    const nonFolders = items.filter(item => !item.isFolder);
+function getStudents() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(STUDENTS_SHEET);
 
-    const packageResults = await Promise.all(
-        folders.map(folder => getDriveFolderPackage(config, folder))
+  if (!sheet) {
+    throw new Error(
+      `Sheet "${STUDENTS_SHEET}" was not found.`
     );
+  }
 
-    const stories = packageResults.filter(Boolean);
+  const lastRow = sheet.getLastRow();
 
-    const packageFolderIds = new Set(stories.map(story => story.folderId));
-    const regularFolders = folders.filter(folder => !packageFolderIds.has(folder.id));
-    const regularItems = [...regularFolders, ...nonFolders];
+  if (lastRow < 2) {
+    return [];
+  }
 
-    if (!stories.length && !regularItems.length) {
-        showEmptyScreen(title);
-        return;
-    }
-
-    showStoryBrowser(title, stories, regularItems);
+  return sheet
+    .getRange(2, 1, lastRow - 1, 1)
+    .getValues()
+    .flat()
+    .map(name => String(name).trim())
+    .filter(Boolean);
 }
 
-async function openCategory(type, encodedCategoryName) {
-    const categoryName = decodeURIComponent(encodedCategoryName);
-    const category = getCategory(type, categoryName);
+function getStudentPrintTotal(logSheet, studentName) {
+  const lastRow = logSheet.getLastRow();
 
-    if (!category) {
-        console.error("Unknown category:", type, categoryName);
-        return;
-    }
+  if (lastRow < 2) {
+    return 0;
+  }
 
-    currentBrowseType = type;
-    browseHistory = [];
-    currentPage = 1;
+  const names = logSheet
+    .getRange(2, 3, lastRow - 1, 1)
+    .getValues()
+    .flat();
 
-    if (type === "print") {
-        activePrintCategory = category.name;
-    }
-
-    await loadDriveFolder(category.folderId, `${category.icon} ${category.name}`);
+  return names.filter(
+    name => String(name).trim() === studentName
+  ).length;
 }
 
-async function openDriveFolder(folderId, encodedTitle) {
-    const title = decodeURIComponent(encodedTitle);
-    currentPage = 1;
-    await loadDriveFolder(folderId, `📁 ${title}`);
+function sendResponse(data, callback) {
+  if (callback) {
+    return ContentService
+      .createTextOutput(
+        `${callback}(${JSON.stringify(data)});`
+      )
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
-
-async function goBack() {
-    currentPage = 1;
-
-    if (browseHistory.length <= 1) {
-        if (currentBrowseType === "print") {
-            showPrint();
-        } else {
-            showListen();
-        }
-
-        return;
-    }
-
-    browseHistory.pop();
-    const previousFolder = browseHistory[browseHistory.length - 1];
-
-    await loadDriveFolder(previousFolder.folderId, previousFolder.title, false);
-}
-
-async function reloadCurrentFolder() {
-    const currentFolder = browseHistory[browseHistory.length - 1];
-
-    if (!currentFolder) {
-        showHome();
-        return;
-    }
-
-    await loadDriveFolder(currentFolder.folderId, currentFolder.title, false);
-}
-
-function openDriveFile(url) {
-    window.open(url, "_blank", "noopener,noreferrer");
-}
-
-function showPrintPreparingScreen(title) {
-    const existingOverlay = document.querySelector(".print-preparing-overlay");
-
-    if (existingOverlay) {
-        existingOverlay.remove();
-    }
-
-    const overlay = document.createElement("section");
-    overlay.className = "print-preparing-overlay";
-    overlay.setAttribute("role", "status");
-    overlay.setAttribute("aria-live", "polite");
-    overlay.innerHTML = `
-        <div class="print-preparing-card">
-            <div class="gear-animation" aria-hidden="true">
-                <span class="gear gear-one">⚙️</span>
-                <span class="gear gear-two">⚙️</span>
-            </div>
-            <h2>Getting your worksheet ready...</h2>
-            <p>${title}</p>
-            <p class="print-preparing-note">Just a moment!</p>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-}
-
-function showPrintReadyScreen(title) {
-    const overlay = document.querySelector(".print-preparing-overlay");
-
-    if (!overlay) {
-        return;
-    }
-
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-live", "off");
-    overlay.innerHTML = `
-        <div class="print-preparing-card print-ready-card">
-            <div class="print-ready-icon" aria-hidden="true">📄</div>
-            <h2>Your worksheet is ready!</h2>
-            <p>${title}</p>
-            <button class="print-my-worksheet-button" type="button" onclick="showStudentSelection()">
-                <span aria-hidden="true">🖨️</span>
-                <span>PRINT MY WORKSHEET</span>
-            </button>
-            <button class="cancel-print-button" type="button" onclick="cancelPreparedPrint()">
-                ← Go Back
-            </button>
-        </div>
-    `;
-
-    const printButton = overlay.querySelector(".print-my-worksheet-button");
-    if (printButton) {
-        printButton.focus();
-    }
-}
-
-
-function loadStudentsFromPrintLog() {
-    return new Promise((resolve, reject) => {
-        const callbackName = `yesStudents_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const script = document.createElement("script");
-        const timeout = window.setTimeout(() => {
-            cleanup();
-            reject(new Error("The student list took too long to load."));
-        }, 10000);
-
-        const cleanup = () => {
-            window.clearTimeout(timeout);
-            delete window[callbackName];
-            script.remove();
-        };
-
-        window[callbackName] = data => {
-            cleanup();
-
-            if (!data || data.ok !== true || !Array.isArray(data.students)) {
-                reject(new Error("The student list could not be loaded."));
-                return;
-            }
-
-            const students = data.students
-                .map(name => String(name || "").trim())
-                .filter(Boolean);
-
-            if (!students.length) {
-                reject(new Error("No students were found in the Students sheet."));
-                return;
-            }
-
-            resolve(students);
-        };
-
-        script.onerror = () => {
-            cleanup();
-            reject(new Error("The student list could not be loaded."));
-        };
-
-        const url = new URL(PRINT_LOG_WEB_APP_URL);
-        url.searchParams.set("action", "students");
-        url.searchParams.set("callback", callbackName);
-        url.searchParams.set("_", String(Date.now()));
-        script.src = url.toString();
-        document.head.appendChild(script);
-    });
-}
-
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-async function showStudentSelection() {
-    const overlay = document.querySelector(".print-preparing-overlay");
-
-    if (!overlay || !activePrintFrame) {
-        return;
-    }
-
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-live", "polite");
-    overlay.innerHTML = `
-        <div class="print-preparing-card print-ready-card" style="max-width:760px;">
-            <div class="print-ready-icon" aria-hidden="true">👤</div>
-            <h2>Who is printing?</h2>
-            <p>${escapeHtml(activePrintTitle)}</p>
-            <p class="print-preparing-note">Loading student names...</p>
-        </div>
-    `;
-
-    try {
-        const students = await loadStudentsFromPrintLog();
-        const buttons = students.map(name => `
-            <button type="button"
-                onclick="selectStudentAndPrint('${encodeURIComponent(name)}')"
-                style="min-height:84px;border:0;border-radius:18px;background:#0B3B82;color:#fff;font-family:'Nunito',sans-serif;font-size:25px;font-weight:900;padding:14px 10px;box-shadow:0 7px 16px rgba(0,0,0,.16);cursor:pointer;">
-                ${escapeHtml(name)}
-            </button>
-        `).join("");
-
-        overlay.setAttribute("aria-live", "off");
-        overlay.innerHTML = `
-            <div class="print-preparing-card print-ready-card" style="max-width:760px;width:min(92vw,760px);">
-                <div class="print-ready-icon" aria-hidden="true">👤</div>
-                <h2>Who is printing?</h2>
-                <p>${escapeHtml(activePrintTitle)}</p>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:100%;margin-top:10px;">
-                    ${buttons}
-                </div>
-                <button class="cancel-print-button" type="button" onclick="showPrintReadyScreen(activePrintTitle)">
-                    ← Back
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error(error);
-        overlay.innerHTML = `
-            <div class="print-preparing-card print-ready-card">
-                <div class="print-ready-icon" aria-hidden="true">⚠️</div>
-                <h2>Student names could not load</h2>
-                <p>${escapeHtml(error.message || "Please try again.")}</p>
-                <button class="print-my-worksheet-button" type="button" onclick="showStudentSelection()">
-                    Try Again
-                </button>
-                <button class="cancel-print-button" type="button" onclick="showPrintReadyScreen(activePrintTitle)">
-                    ← Back
-                </button>
-            </div>
-        `;
-    }
-}
-
-async function logStudentPrint(studentName) {
-    const body = new URLSearchParams();
-    body.set("studentName", studentName);
-    body.set("worksheetName", activePrintTitle);
-    body.set("printCategory", activePrintCategory || "Print Center");
-
-    await fetch(PRINT_LOG_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        },
-        body: body.toString()
-    });
-}
-
-async function selectStudentAndPrint(encodedStudentName) {
-    const studentName = decodeURIComponent(encodedStudentName);
-    const overlay = document.querySelector(".print-preparing-overlay");
-
-    if (overlay) {
-        const buttons = overlay.querySelectorAll("button");
-        buttons.forEach(button => { button.disabled = true; });
-        const note = document.createElement("p");
-        note.className = "print-preparing-note";
-        note.textContent = `Saving ${studentName}'s print...`;
-        const card = overlay.querySelector(".print-preparing-card");
-        if (card) {
-            card.appendChild(note);
-        }
-    }
-
-    try {
-        await logStudentPrint(studentName);
-        printPreparedWorksheet();
-    } catch (error) {
-        console.error("Print log failed.", error);
-
-        if (overlay) {
-            overlay.innerHTML = `
-                <div class="print-preparing-card print-ready-card">
-                    <div class="print-ready-icon" aria-hidden="true">⚠️</div>
-                    <h2>Print was not logged</h2>
-                    <p>Please check the connection and try again so this print is counted for ${escapeHtml(studentName)}.</p>
-                    <button class="print-my-worksheet-button" type="button" onclick="selectStudentAndPrint('${encodeURIComponent(studentName)}')">
-                        Try Again
-                    </button>
-                    <button class="cancel-print-button" type="button" onclick="showStudentSelection()">
-                        ← Choose Another Student
-                    </button>
-                </div>
-            `;
-        }
-    }
-}
-
-function hidePrintPreparingScreen() {
-    const overlay = document.querySelector(".print-preparing-overlay");
-
-    if (overlay) {
-        overlay.remove();
-    }
-}
-
-function cleanupPrintResources() {
-    if (printCleanupTimer) {
-        window.clearTimeout(printCleanupTimer);
-        printCleanupTimer = null;
-    }
-
-    if (activePrintFrame) {
-        activePrintFrame.remove();
-        activePrintFrame = null;
-    }
-
-    if (activePrintObjectUrl) {
-        URL.revokeObjectURL(activePrintObjectUrl);
-        activePrintObjectUrl = "";
-    }
-
-    activePrintTitle = "";
-    hidePrintPreparingScreen();
-}
-
-function handlePrintFinished() {
-    cleanupPrintResources();
-}
-
-function cancelPreparedPrint() {
-    cleanupPrintResources();
-}
-
-function printPreparedWorksheet() {
-    try {
-        const printWindow = activePrintFrame && activePrintFrame.contentWindow;
-
-        if (!printWindow) {
-            throw new Error("The print window could not be opened.");
-        }
-
-        printWindow.focus();
-        printWindow.addEventListener("afterprint", handlePrintFinished, { once: true });
-
-        // Return the student to the worksheet folder as soon as the
-        // user-initiated print action opens the native AirPrint dialog.
-        hidePrintPreparingScreen();
-        printWindow.print();
-
-        printCleanupTimer = window.setTimeout(handlePrintFinished, 120000);
-    } catch (error) {
-        console.error(error);
-        cleanupPrintResources();
-        showErrorScreen(currentPagedTitle, "The print screen could not open. Please try the worksheet again.");
-    }
-}
-
-async function printDrivePdf(encodedTitle, encodedMediaUrl) {
-    const title = decodeURIComponent(encodedTitle);
-    const mediaUrl = decodeURIComponent(encodedMediaUrl);
-
-    cleanupPrintResources();
-    activePrintTitle = title;
-    showPrintPreparingScreen(title);
-
-    try {
-        const response = await fetch(mediaUrl);
-
-        if (!response.ok) {
-            throw new Error(`Unable to prepare worksheet (${response.status}).`);
-        }
-
-        const pdfBlob = await response.blob();
-
-        if (!pdfBlob.type.includes("pdf")) {
-            throw new Error("This worksheet is not a PDF file.");
-        }
-
-        activePrintObjectUrl = URL.createObjectURL(pdfBlob);
-        activePrintFrame = document.createElement("iframe");
-        activePrintFrame.className = "print-document-frame";
-        activePrintFrame.title = `Print ${title}`;
-        activePrintFrame.setAttribute("aria-hidden", "true");
-        activePrintFrame.src = activePrintObjectUrl;
-
-        activePrintFrame.onload = () => {
-            window.setTimeout(() => {
-                showPrintReadyScreen(activePrintTitle || title);
-            }, 700);
-        };
-
-        activePrintFrame.onerror = () => {
-            cleanupPrintResources();
-            showErrorScreen(currentPagedTitle, "The worksheet could not be prepared for printing. Please try again.");
-        };
-
-        document.body.appendChild(activePrintFrame);
-    } catch (error) {
-        console.error(error);
-        cleanupPrintResources();
-        showErrorScreen(currentPagedTitle, error.message || "The worksheet could not be prepared for printing.");
-    }
-}
-
-function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
-    const title = decodeURIComponent(encodedTitle);
-    const coverUrl = decodeURIComponent(encodedCoverUrl || "");
-    const audioUrl = decodeURIComponent(encodedAudioUrl);
-
-    let player = document.getElementById("global-audio");
-
-    if (!player) {
-        player = document.createElement("audio");
-        player.id = "global-audio";
-        player.preload = "auto";
-        player.style.display = "none";
-        document.body.appendChild(player);
-    }
-
-    let bar = document.getElementById("now-playing");
-
-    if (!bar) {
-        bar = document.createElement("section");
-        bar.id = "now-playing";
-        bar.setAttribute("aria-label", "Now playing");
-        bar.style.position = "fixed";
-        bar.style.left = "auto";
-        bar.style.right = "16px";
-        bar.style.top = "42px";
-        bar.style.bottom = "auto";
-        bar.style.width = "326px";
-        bar.style.maxWidth = "calc(100vw - 32px)";
-        bar.style.zIndex = "99998";
-        bar.style.background = "#0f172a";
-        bar.style.color = "#ffffff";
-        bar.style.padding = "12px";
-        bar.style.borderRadius = "16px";
-        bar.style.boxShadow = "0 8px 24px rgba(15, 23, 42, 0.35)";
-        document.body.appendChild(bar);
-
-        const savedPosition = sessionStorage.getItem("yes-now-playing-position");
-        if (savedPosition) {
-            try {
-                const position = JSON.parse(savedPosition);
-                if (Number.isFinite(position.left) && Number.isFinite(position.top)) {
-                    bar.style.left = `${position.left}px`;
-                    bar.style.right = "auto";
-                    bar.style.top = `${position.top}px`;
-                }
-            } catch (error) {
-                console.warn("Could not restore the player position.", error);
-            }
-        }
-    }
-
-    bar.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
-                <div id="np-drag-handle" role="button" tabindex="0" aria-label="Drag player"
-                    style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;padding:5px 7px;border-radius:9px;background:#1e293b;color:#cbd5e1;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;cursor:grab;touch-action:none;user-select:none;">
-                    <span aria-hidden="true" style="font-size:17px;line-height:1;">☰</span>
-                    <span>Drag to move</span>
-                </div>
-                <button type="button" onclick="stopNowPlaying()" aria-label="Close player"
-                    style="width:32px;height:32px;border:0;border-radius:9px;background:#334155;color:#ffffff;font-size:18px;line-height:1;flex:0 0 auto;">×</button>
-            </div>
-
-            ${coverUrl
-                ? `<img src="${coverUrl}" alt="" style="width:130px;height:130px;border-radius:14px;object-fit:cover;">`
-                : `<div aria-hidden="true" style="width:130px;height:130px;border-radius:14px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:54px;">🎧</div>`
-            }
-
-            <div style="width:100%;text-align:center;">
-                <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#cbd5e1;">Now Playing</div>
-                <div style="font-size:16px;font-weight:800;line-height:1.2;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:8px;width:100%;">
-                <span id="np-elapsed" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:left;font-variant-numeric:tabular-nums;">0:00</span>
-                <div id="np-progress-track" role="slider" tabindex="0" aria-label="Story progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
-                    style="position:relative;flex:1;height:12px;border-radius:999px;background:#cbd5e1;overflow:hidden;box-shadow:inset 0 1px 2px rgba(15,23,42,.28);cursor:pointer;touch-action:none;">
-                    <div id="np-progress-fill" style="width:0%;height:100%;border-radius:inherit;background:#2796f3;transition:width .12s linear;"></div>
-                </div>
-                <span id="np-duration" style="min-width:34px;color:#ffffff;font-size:12px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;">0:00</span>
-            </div>
-
-            <div style="display:flex;justify-content:center;gap:10px;width:100%;">
-                <button type="button" onclick="rewindNowPlaying()" aria-label="Rewind 15 seconds" style="width:54px;height:54px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;align-items:center;justify-content:center;padding:5px;">
-                    <svg aria-hidden="true" viewBox="0 0 48 48" width="42" height="42" focusable="false">
-                        <path d="M14.5 15.5H7.5V8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M8.5 15.1C12.2 9.7 18.2 6.8 24.7 7.4C33.6 8.2 40.1 16.1 39.3 25C38.5 33.9 30.6 40.4 21.7 39.6C15.4 39 10 34.8 7.8 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-                        <text x="23.5" y="29.5" text-anchor="middle" fill="currentColor" font-size="14" font-weight="800" font-family="Arial, sans-serif">15</text>
-                    </svg>
-                </button>
-                <button id="np-play-pause" type="button" onclick="toggleNowPlaying()" aria-label="Pause" style="width:54px;height:54px;border:0;border-radius:50%;background:#ffffff;color:#0f172a;font-size:23px;font-weight:700;">⏸</button>
-                <button type="button" onclick="forwardNowPlaying()" aria-label="Forward 15 seconds" style="width:54px;height:54px;border:0;border-radius:15px;background:#334155;color:#ffffff;display:flex;align-items:center;justify-content:center;padding:5px;">
-                    <svg aria-hidden="true" viewBox="0 0 48 48" width="42" height="42" focusable="false">
-                        <path d="M33.5 15.5H40.5V8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M39.5 15.1C35.8 9.7 29.8 6.8 23.3 7.4C14.4 8.2 7.9 16.1 8.7 25C9.5 33.9 17.4 40.4 26.3 39.6C32.6 39 38 34.8 40.2 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-                        <text x="24.5" y="29.5" text-anchor="middle" fill="currentColor" font-size="14" font-weight="800" font-family="Arial, sans-serif">15</text>
-                    </svg>
-                </button>
-                <button type="button" onclick="stopNowPlaying()" aria-label="Stop and close" style="width:50px;height:50px;border:0;border-radius:15px;background:#991b1b;color:#ffffff;font-size:22px;">■</button>
-            </div>
-        </div>
-    `;
-
-    const dragHandle = document.getElementById("np-drag-handle");
-    const progressTrack = document.getElementById("np-progress-track");
-
-    clampNowPlayingToViewport(bar);
-
-    if (progressTrack) {
-        let isScrubbing = false;
-
-        const seekToPointer = event => {
-            if (!Number.isFinite(player.duration) || player.duration <= 0) {
-                return;
-            }
-
-            const rect = progressTrack.getBoundingClientRect();
-            if (rect.width <= 0) {
-                return;
-            }
-
-            const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-            player.currentTime = fraction * player.duration;
-            updateNowPlayingProgress();
-        };
-
-        const finishScrubbing = event => {
-            if (!isScrubbing) {
-                return;
-            }
-
-            isScrubbing = false;
-            seekToPointer(event);
-
-            if (progressTrack.hasPointerCapture(event.pointerId)) {
-                progressTrack.releasePointerCapture(event.pointerId);
-            }
-        };
-
-        progressTrack.addEventListener("pointerdown", event => {
-            event.preventDefault();
-            event.stopPropagation();
-            isScrubbing = true;
-            progressTrack.setPointerCapture(event.pointerId);
-            seekToPointer(event);
-        });
-
-        progressTrack.addEventListener("pointermove", event => {
-            if (!isScrubbing) {
-                return;
-            }
-
-            event.preventDefault();
-            seekToPointer(event);
-        });
-
-        progressTrack.addEventListener("pointerup", finishScrubbing);
-        progressTrack.addEventListener("pointercancel", event => {
-            isScrubbing = false;
-            if (progressTrack.hasPointerCapture(event.pointerId)) {
-                progressTrack.releasePointerCapture(event.pointerId);
-            }
-        });
-
-        progressTrack.addEventListener("keydown", event => {
-            if (!Number.isFinite(player.duration) || player.duration <= 0) {
-                return;
-            }
-
-            if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-                event.preventDefault();
-                player.currentTime = Math.max(0, player.currentTime - 15);
-                updateNowPlayingProgress();
-            } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-                event.preventDefault();
-                player.currentTime = Math.min(player.duration, player.currentTime + 15);
-                updateNowPlayingProgress();
-            } else if (event.key === "Home") {
-                event.preventDefault();
-                player.currentTime = 0;
-                updateNowPlayingProgress();
-            } else if (event.key === "End") {
-                event.preventDefault();
-                player.currentTime = player.duration;
-                updateNowPlayingProgress(true);
-            }
-        });
-    }
-
-    if (dragHandle) {
-        dragHandle.addEventListener("pointerdown", event => {
-            event.preventDefault();
-
-            const rect = bar.getBoundingClientRect();
-            const offsetX = event.clientX - rect.left;
-            const offsetY = event.clientY - rect.top;
-
-            dragHandle.style.cursor = "grabbing";
-            dragHandle.setPointerCapture(event.pointerId);
-
-            const movePlayer = moveEvent => {
-                const maxLeft = Math.max(8, window.innerWidth - bar.offsetWidth - 8);
-                const maxTop = Math.max(8, window.innerHeight - bar.offsetHeight - 8);
-                const nextLeft = Math.max(8, Math.min(maxLeft, moveEvent.clientX - offsetX));
-                const nextTop = Math.max(8, Math.min(maxTop, moveEvent.clientY - offsetY));
-
-                bar.style.left = `${nextLeft}px`;
-                bar.style.right = "auto";
-                bar.style.top = `${nextTop}px`;
-                bar.style.bottom = "auto";
-            };
-
-            const finishDrag = () => {
-                dragHandle.style.cursor = "grab";
-                dragHandle.removeEventListener("pointermove", movePlayer);
-                dragHandle.removeEventListener("pointerup", finishDrag);
-                dragHandle.removeEventListener("pointercancel", finishDrag);
-
-                const finalRect = bar.getBoundingClientRect();
-                sessionStorage.setItem("yes-now-playing-position", JSON.stringify({
-                    left: Math.round(finalRect.left),
-                    top: Math.round(finalRect.top)
-                }));
-            };
-
-            dragHandle.addEventListener("pointermove", movePlayer);
-            dragHandle.addEventListener("pointerup", finishDrag);
-            dragHandle.addEventListener("pointercancel", finishDrag);
-        });
-    }
-
-    player.onplay = updateNowPlayingButton;
-    player.onpause = updateNowPlayingButton;
-    player.onloadedmetadata = () => updateNowPlayingProgress();
-    player.ondurationchange = () => updateNowPlayingProgress();
-    player.ontimeupdate = () => updateNowPlayingProgress();
-    player.onended = () => {
-        updateNowPlayingProgress(true);
-        updateNowPlayingButton();
-    };
-
-    // Restore the known-working v0.6.7 source reset and load sequence.
-    player.pause();
-    player.removeAttribute("src");
-    player.load();
-    updateNowPlayingProgress();
-    player.src = audioUrl;
-    player.load();
-
-    const playPromise = player.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(error => {
-            console.warn("Playback could not start automatically. Tap Play to begin.", error);
-            updateNowPlayingButton();
-        });
-    }
-}
-
-
-function clampNowPlayingToViewport(bar) {
-    if (!bar) {
-        return;
-    }
-
-    const rect = bar.getBoundingClientRect();
-    const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
-    const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
-    const nextLeft = Math.max(8, Math.min(maxLeft, rect.left));
-    const nextTop = Math.max(8, Math.min(maxTop, rect.top));
-
-    bar.style.left = `${nextLeft}px`;
-    bar.style.right = "auto";
-    bar.style.top = `${nextTop}px`;
-    bar.style.bottom = "auto";
-}
-
-
-function formatAudioTime(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 0) {
-        return "0:00";
-    }
-
-    const wholeSeconds = Math.floor(seconds);
-    const hours = Math.floor(wholeSeconds / 3600);
-    const minutes = Math.floor((wholeSeconds % 3600) / 60);
-    const remainingSeconds = wholeSeconds % 60;
-
-    if (hours > 0) {
-        return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
-    }
-
-    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
-}
-
-function updateNowPlayingProgress(forceComplete = false) {
-    const player = document.getElementById("global-audio");
-    const elapsed = document.getElementById("np-elapsed");
-    const duration = document.getElementById("np-duration");
-    const track = document.getElementById("np-progress-track");
-    const fill = document.getElementById("np-progress-fill");
-
-    if (!player) {
-        return;
-    }
-
-    const hasDuration = Number.isFinite(player.duration) && player.duration > 0;
-    const totalSeconds = hasDuration ? player.duration : 0;
-    const currentSeconds = forceComplete && hasDuration
-        ? totalSeconds
-        : Math.max(0, Number.isFinite(player.currentTime) ? player.currentTime : 0);
-    const percentage = hasDuration
-        ? Math.max(0, Math.min(100, (currentSeconds / totalSeconds) * 100))
-        : 0;
-
-    if (elapsed) {
-        elapsed.textContent = formatAudioTime(currentSeconds);
-    }
-
-    if (duration) {
-        duration.textContent = formatAudioTime(totalSeconds);
-    }
-
-    if (fill) {
-        fill.style.width = `${percentage}%`;
-    }
-
-    if (track) {
-        track.setAttribute("aria-valuenow", String(Math.round(percentage)));
-    }
-}
-
-function updateNowPlayingButton() {
-    const player = document.getElementById("global-audio");
-    const button = document.getElementById("np-play-pause");
-
-    if (!player || !button) {
-        return;
-    }
-
-    const isPlaying = !player.paused && !player.ended;
-    button.textContent = isPlaying ? "⏸" : "▶";
-    button.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
-}
-
-function toggleNowPlaying() {
-    const player = document.getElementById("global-audio");
-
-    if (!player) {
-        return;
-    }
-
-    if (player.paused || player.ended) {
-        player.play().catch(error => console.warn("Playback could not start.", error));
-    } else {
-        player.pause();
-    }
-}
-
-function rewindNowPlaying() {
-    const player = document.getElementById("global-audio");
-
-    if (!player) {
-        return;
-    }
-
-    player.currentTime = Math.max(0, player.currentTime - 15);
-}
-
-function forwardNowPlaying() {
-    const player = document.getElementById("global-audio");
-
-    if (!player) {
-        return;
-    }
-
-    if (Number.isFinite(player.duration)) {
-        player.currentTime = Math.min(player.duration, player.currentTime + 15);
-    }
-}
-
-function stopNowPlaying() {
-    const player = document.getElementById("global-audio");
-    const bar = document.getElementById("now-playing");
-
-    if (player) {
-        player.pause();
-        player.removeAttribute("src");
-        player.load();
-    }
-
-    if (bar) {
-        bar.remove();
-    }
-}
-
-function goBackToCurrentFolder() {
-    const currentFolder = browseHistory[browseHistory.length - 1];
-
-    if (!currentFolder) {
-        showListen();
-        return;
-    }
-
-    loadDriveFolder(currentFolder.folderId, currentFolder.title, false);
-}
-
-function showAudioFinished(encodedTitle) {
-    const title = decodeURIComponent(encodedTitle);
-
-    appElement.innerHTML = `
-        <header class="screen-header">
-            <button class="home-button" type="button" onclick="goBackToCurrentFolder()">←</button>
-            <h1>🎧 Finished</h1>
-        </header>
-
-        <section class="status-panel">
-            <div class="status-icon">✅</div>
-            <h2>${title}</h2>
-            <p>All done!</p>
-            <button class="large-home-button" type="button" onclick="showHome()">
-                ⌂ Home
-            </button>
-        </section>
-    `;
-}
-
-init();
