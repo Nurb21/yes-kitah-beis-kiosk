@@ -15,6 +15,7 @@ const fallbackConfig = {
 };
 
 const ITEMS_PER_PAGE = 6;
+const PRINT_LOG_WEB_APP_URL = "https://script.google.com/a/macros/yesmilwaukee.org/s/AKfycbwfN8gG1WhH1mudrktUBSXp3kAhtS54fCo6Cday2q2937IL-nmbiUZX9hgBcY1MNQG8/exec";
 
 let config = fallbackConfig;
 let currentBrowseType = "";
@@ -26,6 +27,7 @@ let activePrintFrame = null;
 let activePrintObjectUrl = "";
 let printCleanupTimer = null;
 let activePrintTitle = "";
+let activePrintCategory = "";
 
 const appElement = document.querySelector(".home-screen");
 
@@ -44,7 +46,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.11</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.12</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -77,6 +79,7 @@ function buildCategoryCards(items, type) {
 function showPrint() {
     browseHistory = [];
     currentPage = 1;
+    activePrintCategory = "";
 
     appElement.innerHTML = `
         <header class="screen-header">
@@ -408,6 +411,10 @@ async function openCategory(type, encodedCategoryName) {
     browseHistory = [];
     currentPage = 1;
 
+    if (type === "print") {
+        activePrintCategory = category.name;
+    }
+
     await loadDriveFolder(category.folderId, `${category.icon} ${category.name}`);
 }
 
@@ -491,7 +498,7 @@ function showPrintReadyScreen(title) {
             <div class="print-ready-icon" aria-hidden="true">📄</div>
             <h2>Your worksheet is ready!</h2>
             <p>${title}</p>
-            <button class="print-my-worksheet-button" type="button" onclick="printPreparedWorksheet()">
+            <button class="print-my-worksheet-button" type="button" onclick="showStudentSelection()">
                 <span aria-hidden="true">🖨️</span>
                 <span>PRINT MY WORKSHEET</span>
             </button>
@@ -504,6 +511,181 @@ function showPrintReadyScreen(title) {
     const printButton = overlay.querySelector(".print-my-worksheet-button");
     if (printButton) {
         printButton.focus();
+    }
+}
+
+
+function loadStudentsFromPrintLog() {
+    return new Promise((resolve, reject) => {
+        const callbackName = `yesStudents_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => {
+            cleanup();
+            reject(new Error("The student list took too long to load."));
+        }, 10000);
+
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            delete window[callbackName];
+            script.remove();
+        };
+
+        window[callbackName] = data => {
+            cleanup();
+
+            if (!data || data.ok !== true || !Array.isArray(data.students)) {
+                reject(new Error("The student list could not be loaded."));
+                return;
+            }
+
+            const students = data.students
+                .map(name => String(name || "").trim())
+                .filter(Boolean);
+
+            if (!students.length) {
+                reject(new Error("No students were found in the Students sheet."));
+                return;
+            }
+
+            resolve(students);
+        };
+
+        script.onerror = () => {
+            cleanup();
+            reject(new Error("The student list could not be loaded."));
+        };
+
+        const url = new URL(PRINT_LOG_WEB_APP_URL);
+        url.searchParams.set("action", "students");
+        url.searchParams.set("callback", callbackName);
+        url.searchParams.set("_", String(Date.now()));
+        script.src = url.toString();
+        document.head.appendChild(script);
+    });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+async function showStudentSelection() {
+    const overlay = document.querySelector(".print-preparing-overlay");
+
+    if (!overlay || !activePrintFrame) {
+        return;
+    }
+
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-live", "polite");
+    overlay.innerHTML = `
+        <div class="print-preparing-card print-ready-card" style="max-width:760px;">
+            <div class="print-ready-icon" aria-hidden="true">👤</div>
+            <h2>Who is printing?</h2>
+            <p>${escapeHtml(activePrintTitle)}</p>
+            <p class="print-preparing-note">Loading student names...</p>
+        </div>
+    `;
+
+    try {
+        const students = await loadStudentsFromPrintLog();
+        const buttons = students.map(name => `
+            <button type="button"
+                onclick="selectStudentAndPrint('${encodeURIComponent(name)}')"
+                style="min-height:84px;border:0;border-radius:18px;background:#0B3B82;color:#fff;font-family:'Nunito',sans-serif;font-size:25px;font-weight:900;padding:14px 10px;box-shadow:0 7px 16px rgba(0,0,0,.16);cursor:pointer;">
+                ${escapeHtml(name)}
+            </button>
+        `).join("");
+
+        overlay.setAttribute("aria-live", "off");
+        overlay.innerHTML = `
+            <div class="print-preparing-card print-ready-card" style="max-width:760px;width:min(92vw,760px);">
+                <div class="print-ready-icon" aria-hidden="true">👤</div>
+                <h2>Who is printing?</h2>
+                <p>${escapeHtml(activePrintTitle)}</p>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:100%;margin-top:10px;">
+                    ${buttons}
+                </div>
+                <button class="cancel-print-button" type="button" onclick="showPrintReadyScreen(activePrintTitle)">
+                    ← Back
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+        overlay.innerHTML = `
+            <div class="print-preparing-card print-ready-card">
+                <div class="print-ready-icon" aria-hidden="true">⚠️</div>
+                <h2>Student names could not load</h2>
+                <p>${escapeHtml(error.message || "Please try again.")}</p>
+                <button class="print-my-worksheet-button" type="button" onclick="showStudentSelection()">
+                    Try Again
+                </button>
+                <button class="cancel-print-button" type="button" onclick="showPrintReadyScreen(activePrintTitle)">
+                    ← Back
+                </button>
+            </div>
+        `;
+    }
+}
+
+async function logStudentPrint(studentName) {
+    const body = new URLSearchParams();
+    body.set("studentName", studentName);
+    body.set("worksheetName", activePrintTitle);
+    body.set("printCategory", activePrintCategory || "Print Center");
+
+    await fetch(PRINT_LOG_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: body.toString()
+    });
+}
+
+async function selectStudentAndPrint(encodedStudentName) {
+    const studentName = decodeURIComponent(encodedStudentName);
+    const overlay = document.querySelector(".print-preparing-overlay");
+
+    if (overlay) {
+        const buttons = overlay.querySelectorAll("button");
+        buttons.forEach(button => { button.disabled = true; });
+        const note = document.createElement("p");
+        note.className = "print-preparing-note";
+        note.textContent = `Saving ${studentName}'s print...`;
+        const card = overlay.querySelector(".print-preparing-card");
+        if (card) {
+            card.appendChild(note);
+        }
+    }
+
+    try {
+        await logStudentPrint(studentName);
+        printPreparedWorksheet();
+    } catch (error) {
+        console.error("Print log failed.", error);
+
+        if (overlay) {
+            overlay.innerHTML = `
+                <div class="print-preparing-card print-ready-card">
+                    <div class="print-ready-icon" aria-hidden="true">⚠️</div>
+                    <h2>Print was not logged</h2>
+                    <p>Please check the connection and try again so this print is counted for ${escapeHtml(studentName)}.</p>
+                    <button class="print-my-worksheet-button" type="button" onclick="selectStudentAndPrint('${encodeURIComponent(studentName)}')">
+                        Try Again
+                    </button>
+                    <button class="cancel-print-button" type="button" onclick="showStudentSelection()">
+                        ← Choose Another Student
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
