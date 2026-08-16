@@ -46,7 +46,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.13</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.12</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -633,54 +633,19 @@ async function showStudentSelection() {
     }
 }
 
-function logStudentPrint(studentName) {
-    return new Promise((resolve, reject) => {
-        const callbackName = `yesPrintLogCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const script = document.createElement("script");
-        const timeoutId = window.setTimeout(() => {
-            cleanup();
-            reject(new Error("Google Sheets did not confirm the print log in time."));
-        }, 12000);
+async function logStudentPrint(studentName) {
+    const body = new URLSearchParams();
+    body.set("studentName", studentName);
+    body.set("worksheetName", activePrintTitle);
+    body.set("printCategory", activePrintCategory || "Print Center");
 
-        const cleanup = () => {
-            window.clearTimeout(timeoutId);
-            try {
-                delete window[callbackName];
-            } catch (error) {
-                window[callbackName] = undefined;
-            }
-            script.remove();
-        };
-
-        window[callbackName] = data => {
-            cleanup();
-
-            if (!data || data.ok !== true) {
-                reject(new Error(
-                    data && data.error
-                        ? String(data.error)
-                        : "Google Sheets did not confirm the print log."
-                ));
-                return;
-            }
-
-            resolve(data);
-        };
-
-        script.onerror = () => {
-            cleanup();
-            reject(new Error("The print log could not connect to Google Sheets."));
-        };
-
-        const url = new URL(PRINT_LOG_WEB_APP_URL);
-        url.searchParams.set("action", "log");
-        url.searchParams.set("studentName", studentName);
-        url.searchParams.set("worksheetName", activePrintTitle);
-        url.searchParams.set("printCategory", activePrintCategory || "Print Center");
-        url.searchParams.set("callback", callbackName);
-        url.searchParams.set("_", String(Date.now()));
-        script.src = url.toString();
-        document.head.appendChild(script);
+    await fetch(PRINT_LOG_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: body.toString()
     });
 }
 
