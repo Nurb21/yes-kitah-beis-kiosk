@@ -46,7 +46,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.14</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.15</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -69,7 +69,7 @@ function showHome() {
 
 function buildCategoryCards(items, type) {
     return items.map(item => `
-        <button class="category-card" type="button" onclick="openCategory('${type}', '${encodeURIComponent(item.name)}')">
+        <button class="category-card" type="button" onclick="openCategory('${type}', '${encodeInlineArg(item.name)}')">
             <span class="category-icon">${item.icon}</span>
             <span>${item.name}</span>
         </button>
@@ -170,6 +170,10 @@ function showEmptyScreen(title) {
     `;
 }
 
+function encodeInlineArg(value) {
+    return encodeURIComponent(value).replace(/'/g, "%27");
+}
+
 function buildDriveItemCards(items) {
     return items.map(item => {
         const preview = item.thumbnailUrl
@@ -177,11 +181,11 @@ function buildDriveItemCards(items) {
             : `<span class="file-icon">${item.icon}</span>`;
 
         const action = item.isFolder
-            ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
+            ? `openDriveFolder('${item.id}', '${encodeInlineArg(item.title)}')`
             : item.isAudio
-                ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
+                ? `openAudioPlayer('${encodeInlineArg(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
                 : currentBrowseType === "print" && item.mimeType === "application/pdf"
-                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
+                    ? `printDrivePdf('${encodeInlineArg(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
                     : `openDriveFile('${item.openUrl}')`;
 
         return `
@@ -203,7 +207,7 @@ function buildStoryCards(items) {
                 : `<span class="story-cover-placeholder">🎧</span>`;
 
             return `
-                <button class="story-card" type="button" onclick="openAudioPlayer('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.coverUrl)}', '${encodeURIComponent(item.audioUrl)}')">
+                <button class="story-card" type="button" onclick="openAudioPlayer('${encodeInlineArg(item.title)}', '${encodeURIComponent(item.coverUrl)}', '${encodeURIComponent(item.audioUrl)}')">
                     <span class="story-cover">
                         ${cover}
                     </span>
@@ -217,11 +221,11 @@ function buildStoryCards(items) {
             : `<span class="file-icon">${item.icon}</span>`;
 
         const action = item.isFolder
-            ? `openDriveFolder('${item.id}', '${encodeURIComponent(item.title)}')`
+            ? `openDriveFolder('${item.id}', '${encodeInlineArg(item.title)}')`
             : item.isAudio
-                ? `openAudioPlayer('${encodeURIComponent(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
+                ? `openAudioPlayer('${encodeInlineArg(item.title)}', '', '${encodeURIComponent(item.mediaUrl)}')`
                 : currentBrowseType === "print" && item.mimeType === "application/pdf"
-                    ? `printDrivePdf('${encodeURIComponent(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
+                    ? `printDrivePdf('${encodeInlineArg(item.title)}', '${encodeURIComponent(item.mediaUrl)}')`
                     : `openDriveFile('${item.openUrl}')`;
 
         return `
@@ -595,7 +599,7 @@ async function showStudentSelection() {
         const students = await loadStudentsFromPrintLog();
         const buttons = students.map(name => `
             <button type="button"
-                onclick="selectStudentAndPrint('${encodeURIComponent(name)}')"
+                onclick="selectStudentAndPrint('${encodeInlineArg(name)}')"
                 style="min-height:84px;border:0;border-radius:18px;background:#0B3B82;color:#fff;font-family:'Nunito',sans-serif;font-size:25px;font-weight:900;padding:14px 10px;box-shadow:0 7px 16px rgba(0,0,0,.16);cursor:pointer;">
                 ${escapeHtml(name)}
             </button>
@@ -712,7 +716,7 @@ async function selectStudentAndPrint(encodedStudentName) {
                     <div class="print-ready-icon" aria-hidden="true">⚠️</div>
                     <h2>Print was not logged</h2>
                     <p>Please check the connection and try again so this print is counted for ${escapeHtml(studentName)}.</p>
-                    <button class="print-my-worksheet-button" type="button" onclick="selectStudentAndPrint('${encodeURIComponent(studentName)}')">
+                    <button class="print-my-worksheet-button" type="button" onclick="selectStudentAndPrint('${encodeInlineArg(studentName)}')">
                         Try Again
                     </button>
                     <button class="cancel-print-button" type="button" onclick="showStudentSelection()">
