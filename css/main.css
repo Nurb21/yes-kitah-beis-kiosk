@@ -72,7 +72,11 @@ body {
     max-width: 900px;
     display: flex;
     flex-direction: column;
-    gap: 130px;
+    gap: 0;
+}
+
+.home-actions .print-button {
+    margin-bottom: 110px;
 }
 
 .big-button {

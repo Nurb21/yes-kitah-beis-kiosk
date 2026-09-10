@@ -46,7 +46,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.15</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.16</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
