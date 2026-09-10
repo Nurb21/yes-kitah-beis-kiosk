@@ -812,18 +812,35 @@ async function printDrivePdf(encodedTitle, encodedMediaUrl) {
         activePrintFrame.setAttribute("aria-hidden", "true");
         activePrintFrame.src = activePrintObjectUrl;
 
+        let printReadyShown = false;
+
+        const showReadyOnce = () => {
+            if (printReadyShown) {
+                return;
+            }
+
+            printReadyShown = true;
+            showPrintReadyScreen(activePrintTitle || title);
+        };
+
         activePrintFrame.onload = () => {
-            window.setTimeout(() => {
-                showPrintReadyScreen(activePrintTitle || title);
-            }, 700);
+            window.setTimeout(showReadyOnce, 700);
         };
 
         activePrintFrame.onerror = () => {
+            if (printReadyShown) {
+                return;
+            }
+
             cleanupPrintResources();
             showErrorScreen(currentPagedTitle, "The worksheet could not be prepared for printing. Please try again.");
         };
 
         document.body.appendChild(activePrintFrame);
+
+        // Older iPad Safari does not always fire iframe.onload for PDF files.
+        // Do not leave the student stuck on the preparation screen forever.
+        window.setTimeout(showReadyOnce, 4000);
     } catch (error) {
         console.error(error);
         cleanupPrintResources();
@@ -1021,6 +1038,26 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     }
 
     if (dragHandle) {
+        const savePlayerPosition = () => {
+            const finalRect = bar.getBoundingClientRect();
+            sessionStorage.setItem("yes-now-playing-position", JSON.stringify({
+                left: Math.round(finalRect.left),
+                top: Math.round(finalRect.top)
+            }));
+        };
+
+        const movePlayerTo = (clientX, clientY, offsetX, offsetY) => {
+            const maxLeft = Math.max(8, window.innerWidth - bar.offsetWidth - 8);
+            const maxTop = Math.max(8, window.innerHeight - bar.offsetHeight - 8);
+            const nextLeft = Math.max(8, Math.min(maxLeft, clientX - offsetX));
+            const nextTop = Math.max(8, Math.min(maxTop, clientY - offsetY));
+
+            bar.style.left = `${nextLeft}px`;
+            bar.style.right = "auto";
+            bar.style.top = `${nextTop}px`;
+            bar.style.bottom = "auto";
+        };
+
         dragHandle.addEventListener("pointerdown", event => {
             event.preventDefault();
 
@@ -1032,15 +1069,7 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
             dragHandle.setPointerCapture(event.pointerId);
 
             const movePlayer = moveEvent => {
-                const maxLeft = Math.max(8, window.innerWidth - bar.offsetWidth - 8);
-                const maxTop = Math.max(8, window.innerHeight - bar.offsetHeight - 8);
-                const nextLeft = Math.max(8, Math.min(maxLeft, moveEvent.clientX - offsetX));
-                const nextTop = Math.max(8, Math.min(maxTop, moveEvent.clientY - offsetY));
-
-                bar.style.left = `${nextLeft}px`;
-                bar.style.right = "auto";
-                bar.style.top = `${nextTop}px`;
-                bar.style.bottom = "auto";
+                movePlayerTo(moveEvent.clientX, moveEvent.clientY, offsetX, offsetY);
             };
 
             const finishDrag = () => {
@@ -1048,18 +1077,47 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
                 dragHandle.removeEventListener("pointermove", movePlayer);
                 dragHandle.removeEventListener("pointerup", finishDrag);
                 dragHandle.removeEventListener("pointercancel", finishDrag);
-
-                const finalRect = bar.getBoundingClientRect();
-                sessionStorage.setItem("yes-now-playing-position", JSON.stringify({
-                    left: Math.round(finalRect.left),
-                    top: Math.round(finalRect.top)
-                }));
+                savePlayerPosition();
             };
 
             dragHandle.addEventListener("pointermove", movePlayer);
             dragHandle.addEventListener("pointerup", finishDrag);
             dragHandle.addEventListener("pointercancel", finishDrag);
         });
+
+        dragHandle.addEventListener("touchstart", event => {
+            if (!event.touches.length) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const touch = event.touches[0];
+            const rect = bar.getBoundingClientRect();
+            const offsetX = touch.clientX - rect.left;
+            const offsetY = touch.clientY - rect.top;
+
+            const moveTouch = moveEvent => {
+                if (!moveEvent.touches.length) {
+                    return;
+                }
+
+                moveEvent.preventDefault();
+                const currentTouch = moveEvent.touches[0];
+                movePlayerTo(currentTouch.clientX, currentTouch.clientY, offsetX, offsetY);
+            };
+
+            const finishTouch = () => {
+                document.removeEventListener("touchmove", moveTouch);
+                document.removeEventListener("touchend", finishTouch);
+                document.removeEventListener("touchcancel", finishTouch);
+                savePlayerPosition();
+            };
+
+            document.addEventListener("touchmove", moveTouch, { passive: false });
+            document.addEventListener("touchend", finishTouch);
+            document.addEventListener("touchcancel", finishTouch);
+        }, { passive: false });
     }
 
     player.onplay = updateNowPlayingButton;
