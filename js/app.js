@@ -1,7 +1,7 @@
 /* ===== v0.6.17: Print Center choose-a-worksheet timer ===== */
 var PrintTimer = (function () {
-    var TOTAL_MS = 25000;
-    var WARN_MS = 10000;
+    var TOTAL_MS = 120000;
+    var WARN_MS = 20000;
     var deadline = 0;
     var handle = null;
     var bar = null;
