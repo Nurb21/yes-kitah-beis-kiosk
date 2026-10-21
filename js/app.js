@@ -1,3 +1,56 @@
+/* ===== v0.6.17: Print Center choose-a-worksheet timer ===== */
+var PrintTimer = (function () {
+    var TOTAL_MS = 25000;
+    var WARN_MS = 10000;
+    var deadline = 0;
+    var handle = null;
+    var bar = null;
+
+    function getBar() {
+        if (!bar) {
+            bar = document.createElement("div");
+            bar.id = "print-timer";
+            document.body.appendChild(bar);
+        }
+        return bar;
+    }
+
+    function tick() {
+        var left = deadline - new Date().getTime();
+        if (left <= 0) {
+            stop();
+            showHome();
+            return;
+        }
+        var b = getBar();
+        var secs = Math.ceil(left / 1000);
+        if (left <= WARN_MS) {
+            b.className = "warn";
+            b.textContent = "Pick one now! " + secs;
+        } else {
+            b.className = "";
+            b.textContent = "Time left to choose: " + Math.floor(secs / 60) + ":" +
+                (secs % 60 < 10 ? "0" : "") + (secs % 60);
+        }
+    }
+
+    function start() {
+        if (handle) { return; }
+        deadline = new Date().getTime() + TOTAL_MS;
+        getBar().style.display = "block";
+        tick();
+        handle = setInterval(tick, 500);
+    }
+
+    function stop() {
+        if (handle) { clearInterval(handle); handle = null; }
+        if (bar) { bar.style.display = "none"; bar.className = ""; }
+    }
+
+    return { start: start, stop: stop };
+})();
+/* ===== end print timer ===== */
+
 const fallbackConfig = {
     googleDrive: {
         apiKey: "PASTE_GOOGLE_DRIVE_API_KEY_HERE"
@@ -42,11 +95,12 @@ async function init() {
 }
 
 function showHome() {
+    PrintTimer.stop();
     browseHistory = [];
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.16</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.17</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -77,6 +131,7 @@ function buildCategoryCards(items, type) {
 }
 
 function showPrint() {
+    PrintTimer.start();
     browseHistory = [];
     currentPage = 1;
     activePrintCategory = "";
@@ -94,6 +149,7 @@ function showPrint() {
 }
 
 function showListen() {
+    PrintTimer.stop();
     browseHistory = [];
     currentPage = 1;
 
@@ -789,6 +845,7 @@ function printPreparedWorksheet() {
 }
 
 async function printDrivePdf(encodedTitle, encodedMediaUrl) {
+    PrintTimer.stop();
     const title = decodeURIComponent(encodedTitle);
     const mediaUrl = decodeURIComponent(encodedMediaUrl);
 

@@ -1,0 +1,772 @@
+/* ==========================================
+   YES Kitah Beis Kiosk
+   Main Stylesheet
+========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    font-family: "Nunito", sans-serif;
+    background: #FFF8EA;
+    color: #0B3B82;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+}
+
+/* =========================
+   App Layout
+========================= */
+
+.home-screen {
+    width: 100%;
+    max-width: 1280px;
+    min-height: 100vh;
+    padding: 36px 42px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 42px;
+}
+
+/* =========================
+   Branding
+========================= */
+
+.brand {
+    text-align: center;
+}
+
+.school-logo {
+    width: 280px;
+    max-width: 90%;
+    height: auto;
+    margin-bottom: 25px;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,.15));
+}
+
+.brand h1 {
+    font-size: 56px;
+    font-weight: 900;
+    color: #0B3B82;
+    letter-spacing: -1px;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.home-actions {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.home-actions .print-button {
+    margin-bottom: 110px;
+}
+
+.big-button {
+    width: 100%;
+    height: 155px;
+    border: none;
+    border-radius: 28px;
+    color: white;
+    font-family: "Nunito", sans-serif;
+    font-size: 56px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 35px;
+    cursor: pointer;
+    transition: all .18s ease;
+    box-shadow: 0 12px 28px rgba(0,0,0,.20);
+}
+
+.big-button:hover {
+    transform: translateY(-3px);
+}
+
+.big-button:active {
+    transform: scale(.97);
+}
+
+.button-icon {
+    font-size: 64px;
+}
+
+.print-button {
+    background: linear-gradient(180deg, #63BE45, #338B2E);
+}
+
+.listen-button {
+    background: linear-gradient(180deg, #2796F3, #0A5BA8);
+}
+
+/* =========================
+   Header
+========================= */
+
+.screen-header {
+    width: 100%;
+    min-height: 86px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.screen-header h1 {
+    font-size: 56px;
+    font-weight: 900;
+    color: #0B3B82;
+    text-align: center;
+}
+
+.home-button {
+    position: absolute;
+    left: 0;
+    width: 82px;
+    height: 82px;
+    border: none;
+    border-radius: 16px;
+    background: white;
+    color: #0B3B82;
+    font-family: "Nunito", sans-serif;
+    font-size: 46px;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(0,0,0,.15);
+    cursor: pointer;
+}
+
+.home-button:active {
+    transform: scale(.95);
+}
+
+/* =========================
+   Category Screens
+========================= */
+
+.category-grid {
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+}
+
+.listening-category-grid {
+    max-width: 820px;
+    margin-top: 48px;
+    grid-template-columns: 1fr;
+    gap: 34px;
+}
+
+.listening-category-grid .category-card {
+    min-height: 155px;
+    width: 100%;
+    flex-direction: row;
+    font-size: 40px;
+    gap: 28px;
+}
+
+.listening-category-grid .category-icon {
+    font-size: 76px;
+}
+
+.category-card {
+    min-height: 190px;
+    border: none;
+    border-radius: 28px;
+    background: white;
+    color: #0B3B82;
+    font-family: "Nunito", sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.18);
+    cursor: pointer;
+}
+
+.category-card:active {
+    transform: scale(.97);
+}
+
+.category-icon {
+    font-size: 70px;
+}
+
+/* =========================
+   Status Panels
+========================= */
+
+.status-panel {
+    width: 100%;
+    max-width: 900px;
+    min-height: 360px;
+    border-radius: 32px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(0,0,0,.16);
+}
+
+.status-icon {
+    font-size: 88px;
+}
+
+.status-panel h2 {
+    font-size: 44px;
+    font-weight: 900;
+    color: #0B3B82;
+}
+
+.status-panel p {
+    max-width: 620px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #38577E;
+}
+
+.error-panel h2 {
+    color: #B43131;
+}
+
+.small-action-button {
+    margin-top: 18px;
+    border: none;
+    border-radius: 18px;
+    padding: 18px 34px;
+    background: #0B3B82;
+    color: white;
+    font-family: "Nunito", sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,.16);
+}
+
+/* =========================
+   File Browser
+========================= */
+
+.file-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+}
+
+.file-card {
+    min-height: 230px;
+    border: none;
+    border-radius: 22px;
+    background: white;
+    color: #0B3B82;
+    font-family: "Nunito", sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+    box-shadow: 0 10px 22px rgba(0,0,0,.16);
+    cursor: pointer;
+}
+
+.file-card:active {
+    transform: scale(.97);
+}
+
+.file-preview {
+    width: 100%;
+    height: 155px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F4F7FB;
+    border-bottom: 1px solid rgba(11,59,130,.12);
+}
+
+.file-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-icon {
+    font-size: 72px;
+}
+
+.file-title {
+    width: 100%;
+    padding: 16px 12px 18px;
+    line-height: 1.1;
+    text-align: center;
+    word-break: break-word;
+}
+
+/* =========================
+   Story Browser
+========================= */
+
+.story-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 690px;
+    margin: 0 auto;
+    gap: 8px 12px;
+}
+
+.story-card {
+    border: none;
+    background: transparent;
+    color: #0B3B82;
+    font-family: "Nunito", sans-serif;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+}
+
+.story-card:active {
+    transform: scale(.97);
+}
+
+.story-cover {
+    width: 122px;
+    height: 122px;
+    max-width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 14px 28px rgba(0,0,0,.22);
+}
+
+.story-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.story-cover-placeholder {
+    font-size: 68px;
+}
+
+.story-title {
+    width: 100%;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.05;
+    min-height: 34px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: center;
+    color: #0B3B82;
+}
+
+
+/* =========================
+   Story Pagination
+========================= */
+
+.story-pagination-bottom {
+    width: 100%;
+    max-width: 690px;
+    margin: 20px auto 24px;
+}
+
+.pagination-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.page-button {
+    min-width: 180px;
+    min-height: 54px;
+    border: none;
+    border-radius: 20px;
+    padding: 9px 20px;
+    background: linear-gradient(180deg, #2796F3, #0A5BA8);
+    color: white;
+    font-family: "Nunito", sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,.16);
+}
+
+.page-button:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+.page-label {
+    min-width: 125px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #0B3B82;
+}
+
+/* =========================
+   Audio Player
+========================= */
+
+.audio-player-screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.audio-player-card {
+    width: 100%;
+    max-width: 720px;
+    background: white;
+    border-radius: 34px;
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.18);
+}
+
+.player-cover {
+    width: min(520px, 100%);
+    aspect-ratio: 1 / 1;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #F4F7FB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(0,0,0,.16);
+}
+
+.player-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.player-cover-placeholder {
+    font-size: 110px;
+}
+
+.audio-player-card h2 {
+    font-size: 40px;
+    font-weight: 900;
+    color: #0B3B82;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.story-audio {
+    width: 100%;
+    height: 54px;
+}
+
+.large-home-button {
+    border: none;
+    border-radius: 22px;
+    padding: 18px 42px;
+    background: linear-gradient(180deg, #2796F3, #0A5BA8);
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(0,0,0,.16);
+}
+
+/* =========================
+   Smaller Screens
+========================= */
+
+@media (max-width: 980px) {
+    .file-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .story-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .home-screen {
+        padding: 28px;
+    }
+
+    .screen-header h1 {
+        font-size: 42px;
+        padding-left: 90px;
+        padding-right: 10px;
+    }
+
+    .category-grid,
+    .file-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .story-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px 6px;
+    }
+
+    .story-cover {
+        width: 112px;
+        height: 112px;
+    }
+
+    .story-title {
+        font-size: 15px;
+    }
+
+    .page-button {
+        min-width: 150px;
+        min-height: 50px;
+        font-size: 19px;
+    }
+
+    .page-label {
+        min-width: 105px;
+        font-size: 18px;
+    }
+
+    .brand h1 {
+        font-size: 48px;
+    }
+
+    .big-button {
+        height: 130px;
+        font-size: 42px;
+    }
+}
+
+/* =========================
+   One-Tap Worksheet Printing
+========================= */
+
+.print-preparing-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: rgba(255, 248, 234, .96);
+}
+
+.print-preparing-card {
+    width: 100%;
+    max-width: 720px;
+    min-height: 420px;
+    border-radius: 36px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 44px;
+    text-align: center;
+    box-shadow: 0 18px 46px rgba(0, 0, 0, .22);
+}
+
+.gear-animation {
+    position: relative;
+    width: 190px;
+    height: 135px;
+    margin-bottom: 4px;
+}
+
+.gear {
+    position: absolute;
+    display: block;
+    line-height: 1;
+    transform-origin: center;
+}
+
+.gear-one {
+    left: 4px;
+    top: 2px;
+    font-size: 104px;
+    animation: gear-spin-clockwise 1.8s linear infinite;
+}
+
+.gear-two {
+    right: 0;
+    bottom: 0;
+    font-size: 78px;
+    animation: gear-spin-counterclockwise 1.45s linear infinite;
+}
+
+.print-preparing-card h2 {
+    font-size: 44px;
+    font-weight: 900;
+    color: #0B3B82;
+    line-height: 1.12;
+}
+
+.print-preparing-card p {
+    max-width: 620px;
+    font-size: 25px;
+    font-weight: 800;
+    color: #38577E;
+}
+
+.print-preparing-card .print-preparing-note {
+    color: #338B2E;
+    font-size: 28px;
+}
+
+.print-document-frame {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes gear-spin-clockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes gear-spin-counterclockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+}
+
+@media (max-width: 760px) {
+    .print-preparing-card {
+        min-height: 360px;
+        padding: 34px 24px;
+    }
+
+    .print-preparing-card h2 {
+        font-size: 36px;
+    }
+
+    .print-preparing-card p {
+        font-size: 22px;
+    }
+}
+
+
+/* =========================
+   Print Confirmation Screen
+========================= */
+
+.print-ready-card {
+    gap: 20px;
+}
+
+.print-ready-icon {
+    font-size: 68px;
+    line-height: 1;
+}
+
+.print-my-worksheet-button {
+    width: 100%;
+    min-height: 112px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 28px;
+    padding: 20px 28px;
+    background: #2f9e44;
+    color: white;
+    font: inherit;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    box-shadow: 0 10px 0 #217a32, 0 16px 28px rgba(0, 0, 0, .2);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.print-my-worksheet-button:active {
+    transform: translateY(5px);
+    box-shadow: 0 5px 0 #217a32, 0 9px 18px rgba(0, 0, 0, .18);
+}
+
+.print-my-worksheet-button:focus-visible {
+    outline: 6px solid #ffcf33;
+    outline-offset: 5px;
+}
+
+.cancel-print-button {
+    min-width: 230px;
+    min-height: 64px;
+    border: 3px solid #7890aa;
+    border-radius: 20px;
+    padding: 12px 24px;
+    background: #eef3f8;
+    color: #244668;
+    font: inherit;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+@media (max-width: 760px) {
+    .print-ready-icon {
+        font-size: 72px;
+    }
+
+    .print-my-worksheet-button {
+        min-height: 96px;
+        font-size: 28px;
+        border-radius: 24px;
+    }
+
+    .cancel-print-button {
+        min-height: 58px;
+        font-size: 21px;
+    }
+}
