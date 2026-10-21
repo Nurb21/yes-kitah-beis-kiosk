@@ -5,6 +5,8 @@ var PrintTimer = (function () {
     var deadline = 0;
     var handle = null;
     var bar = null;
+    var paused = false;
+    var remaining = 0;
 
     function getBar() {
         if (!bar) {
@@ -36,6 +38,7 @@ var PrintTimer = (function () {
 
     function start() {
         if (handle) { return; }
+        if (paused) { resume(); return; }
         deadline = new Date().getTime() + TOTAL_MS;
         getBar().style.display = "block";
         tick();
@@ -43,11 +46,31 @@ var PrintTimer = (function () {
     }
 
     function stop() {
+        paused = false;
         if (handle) { clearInterval(handle); handle = null; }
         if (bar) { bar.style.display = "none"; bar.className = ""; }
     }
 
-    return { start: start, stop: stop };
+    function pause() {
+        if (!handle) { return; }
+        remaining = deadline - new Date().getTime();
+        clearInterval(handle);
+        handle = null;
+        paused = true;
+        if (bar) { bar.style.display = "none"; }
+    }
+
+    function resume() {
+        if (!paused) { return; }
+        paused = false;
+        if (remaining <= 0) { stop(); showHome(); return; }
+        deadline = new Date().getTime() + remaining;
+        getBar().style.display = "block";
+        tick();
+        handle = setInterval(tick, 500);
+    }
+
+    return { start: start, stop: stop, pause: pause, resume: resume };
 })();
 /* ===== end print timer ===== */
 
@@ -817,6 +840,7 @@ function handlePrintFinished() {
 }
 
 function cancelPreparedPrint() {
+    PrintTimer.resume();
     cleanupPrintResources();
 }
 
@@ -845,7 +869,7 @@ function printPreparedWorksheet() {
 }
 
 async function printDrivePdf(encodedTitle, encodedMediaUrl) {
-    PrintTimer.stop();
+    PrintTimer.pause();
     const title = decodeURIComponent(encodedTitle);
     const mediaUrl = decodeURIComponent(encodedMediaUrl);
 
