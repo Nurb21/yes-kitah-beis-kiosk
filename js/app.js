@@ -123,7 +123,7 @@ function showHome() {
     currentPage = 1;
 
     appElement.innerHTML = `
-        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.17</div>
+        <div class="app-version" style="position:fixed;top:10px;left:12px;z-index:9999;font:600 14px/1.2 Arial,sans-serif;color:#6b7280;letter-spacing:0.02em;pointer-events:none;">v0.6.18</div>
 
         <header class="brand">
             <img src="assets/images/yes-logo.png" alt="YES Logo" class="school-logo">
@@ -461,7 +461,8 @@ async function loadDriveFolder(folderId, title, shouldPushHistory = true) {
 
 async function showListeningFolder(title, items) {
     const folders = items.filter(item => item.isFolder);
-    const nonFolders = items.filter(item => !item.isFolder);
+    // Inside listening folders show only songs; hide cover art, booklets, etc.
+    const nonFolders = items.filter(item => !item.isFolder && item.isAudio);
 
     const packageResults = await Promise.all(
         folders.map(folder => getDriveFolderPackage(config, folder))
@@ -933,6 +934,8 @@ async function printDrivePdf(encodedTitle, encodedMediaUrl) {
     }
 }
 
+let audioQueue = null;
+
 function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     const title = decodeURIComponent(encodedTitle);
     const coverUrl = decodeURIComponent(encodedCoverUrl || "");
@@ -1210,9 +1213,30 @@ function openAudioPlayer(encodedTitle, encodedCoverUrl, encodedAudioUrl) {
     player.onloadedmetadata = () => updateNowPlayingProgress();
     player.ondurationchange = () => updateNowPlayingProgress();
     player.ontimeupdate = () => updateNowPlayingProgress();
+    // Build or keep the play queue so an album plays through track by track.
+    if (!(audioQueue && audioQueue.items.some(item => item.mediaUrl === audioUrl))) {
+        const trackList = (currentPagedItems || []).filter(item => item.isAudio);
+        audioQueue = trackList.some(item => item.mediaUrl === audioUrl)
+            ? { items: trackList }
+            : null;
+    }
+
     player.onended = () => {
         updateNowPlayingProgress(true);
         updateNowPlayingButton();
+
+        if (audioQueue) {
+            const index = audioQueue.items.findIndex(item => item.mediaUrl === audioUrl);
+            const next = index >= 0 ? audioQueue.items[index + 1] : null;
+
+            if (next) {
+                openAudioPlayer(
+                    encodeInlineArg(next.title),
+                    "",
+                    encodeURIComponent(next.mediaUrl)
+                );
+            }
+        }
     };
 
     // Restore the known-working v0.6.7 source reset and load sequence.
@@ -1367,6 +1391,8 @@ function stopNowPlaying() {
     if (bar) {
         bar.remove();
     }
+
+    audioQueue = null;
 }
 
 function goBackToCurrentFolder() {

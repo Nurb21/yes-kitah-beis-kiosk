@@ -138,11 +138,15 @@ async function getDriveFolderPackage(config, folderItem) {
 
     const children = await getDriveItems(config, folderItem.id);
     const cover = children.find(isImageFileLike);
-    const audio = children.find(isAudioFileLike);
+    const audioFiles = children.filter(isAudioFileLike);
 
-    if (!audio) {
+    // A "story" package is a folder with exactly one audio file.
+    // Folders with several songs (albums) open as a normal track list instead.
+    if (audioFiles.length !== 1) {
         return null;
     }
+
+    const audio = audioFiles[0];
 
     return {
         type: "story",
